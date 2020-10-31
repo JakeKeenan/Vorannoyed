@@ -1,0 +1,5 @@
+C:\Users\Jake Keenan\Source\Repos\Vorannoyed\Vorannoyed\Vorannoyed\bin\Debug\netstandard2.0\Vorannoyed.deps.json
+C:\Users\Jake Keenan\Source\Repos\Vorannoyed\Vorannoyed\Vorannoyed\bin\Debug\netstandard2.0\Vorannoyed.dll
+C:\Users\Jake Keenan\Source\Repos\Vorannoyed\Vorannoyed\Vorannoyed\obj\Debug\netstandard2.0\Vorannoyed.csprojAssemblyReference.cache
+C:\Users\Jake Keenan\Source\Repos\Vorannoyed\Vorannoyed\Vorannoyed\obj\Debug\netstandard2.0\Vorannoyed.AssemblyInfoInputs.cache
+C:\Users\Jake Keenan\Source\Repos\Vorannoyed\Vorannoyed\Vorannoyed\obj\Debug\netstandard2.0\Vorannoyed.AssemblyInfo.cs

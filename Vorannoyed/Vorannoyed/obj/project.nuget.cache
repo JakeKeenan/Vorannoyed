@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "Lg7xcQh7280P8T6ZGkN5CZZokN2jiNBuL9lvhH/r6hxq2gil8OM8NnxFRwQYlyusEtYWwzPFT/2cC+Ml+R4bsw==",
+  "dgSpecHash": "umq259NTMr00+sA69dfL1DA8LB2EF/FdS3fnruZFQc0hprXCLSE0jyJhIJhopGSYpLvXkkyvVJ7sdF5pXzNxLg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\jkeenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
+  "projectFilePath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\jkeenan\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
-    "C:\\Users\\jkeenan\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+    "C:\\Users\\Jake Keenan\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\Jake Keenan\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512",
+    "C:\\Users\\Jake Keenan\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512"
   ],
   "logs": []
 }

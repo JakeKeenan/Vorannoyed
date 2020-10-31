@@ -1,21 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\jkeenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj": {}
+    "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj": {}
   },
   "projects": {
-    "C:\\Users\\jkeenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj": {
+    "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\jkeenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
+        "projectUniqueName": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
         "projectName": "Vorannoyed",
-        "projectPath": "C:\\Users\\jkeenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
-        "packagesPath": "C:\\Users\\jkeenan\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\jkeenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\obj\\",
+        "projectPath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
+        "packagesPath": "C:\\Users\\Jake Keenan\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Microsoft\\Xamarin\\NuGet\\"
+        ],
         "configFilePaths": [
-          "C:\\Users\\jkeenan\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Jake Keenan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netstandard2.0"
@@ -43,6 +47,10 @@
               "target": "Package",
               "version": "[2.0.3, )",
               "autoReferenced": true
+            },
+            "System.Numerics.Vectors": {
+              "target": "Package",
+              "version": "[4.5.0, )"
             }
           },
           "imports": [
@@ -55,7 +63,7 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.301\\RuntimeIdentifierGraph.json"
         }
       }
     }
