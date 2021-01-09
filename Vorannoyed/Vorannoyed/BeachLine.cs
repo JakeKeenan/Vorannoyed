@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -237,7 +238,7 @@ namespace Vorannoyed
 
 
             float[,] GMatrix = { { vectorSlopeOne.X, -vectorSlopeTwo.X, (startPointTwo.X - startPointOne.X) },
-                                { vectorSlopeOne.Y, -vectorSlopeTwo.Y, (startPointTwo.X - startPointOne.Y) }};
+                                { vectorSlopeOne.Y, -vectorSlopeTwo.Y, (startPointTwo.Y - startPointOne.Y) }};
 
             GaussianElim.SolutionResult result = GaussianElim.Solve(GMatrix, GMatrix.GetLength(0));
             if (result == GaussianElim.SolutionResult.OneSolution)
@@ -248,7 +249,6 @@ namespace Vorannoyed
                 {
                     Vector2 foo = new Vector2(startPointOne.X + vectorSlopeOne.X * parameterResultOne, startPointOne.Y + vectorSlopeOne.Y * parameterResultOne);
                     Vector2 bar = new Vector2(startPointTwo.X + vectorSlopeTwo.X * parameterResultTwo, startPointTwo.Y + vectorSlopeTwo.Y * parameterResultTwo);
-
                     return bar;
                     //return new Vector3(midPointOne.x + vectorSlopeOne.x * parameterResultOne, midPointOne.y + vectorSlopeOne.y * parameterResultOne);
                 }
@@ -301,19 +301,21 @@ namespace Vorannoyed
                     newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex);
                     //newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
                     //want to delete left arc of edge2
                     beachTree[getLeftChildIndex(evnt.VEdgeTwoIndex)] = null;
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)));
+                    copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)), ref events);
                 }
                 else
                 {
                     newEdge = new VEdge(vEdgeTwo.LeftArcIndex, vEdgeOne.RightArcIndex);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
                     //want to delete the right arc of edge2
                     beachTree[getRightChildIndex(evnt.VEdgeTwoIndex)] = null;
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)));
+                    copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
                 }
             }
             else
@@ -323,39 +325,44 @@ namespace Vorannoyed
                 {
                     newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.LeftArcIndex);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
                     //want to delete right arc of arc2
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)));
+                    copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
                 }
                 else
                 {
                     newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
                     //want to delete left arc of arc2
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)));
+                    copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)), ref events);
+                    //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
                 }
             }
             //need to look left and right,
             events[circleEvent].Deleted = true;//look here... 10-26
             //evnt.VEdgeOneIndex
-            int parentEdgeOfNewEdgeIndex = getParentIndex(evnt.VEdgeOneIndex);
             int newEdgeIndex = evnt.VEdgeOneIndex;
+            //int parentEdgeOfNewEdgeIndex = getParentIndex(newEdgeIndex);
+            int parentEdgeOfNewEdgeIndex = getClosestLeftAncestor(newEdgeIndex);
+            int closestLeftEdgeIndex = getClosestLeftEdgeIndex(newEdgeIndex);
+            int closestRightEdgeIndex = getClosestRightEdgeIndex(newEdgeIndex);
 
             //Check the new triplets for potential circle events
-            if (parentEdgeOfNewEdgeIndex != evnt.VEdgeOneIndex)
+            if (parentEdgeOfNewEdgeIndex != newEdgeIndex)
             {
-                //Vector3 intercept = getLineIntercept(edges[beachTree[evnt.VEdgeOneIndex].EdgeIndex], edges[beachTree[parentEdgeOfNewEdgeIndex].EdgeIndex]);
-                Vector2 intercept = getRayIntercept(edges[beachTree[evnt.VEdgeOneIndex].EdgeIndex], edges[beachTree[parentEdgeOfNewEdgeIndex].EdgeIndex], circleEvent.EventLocation);
-                if (intercept.Y != float.NegativeInfinity)
+                newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+                Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[parentEdgeOfNewEdgeIndex].EdgeIndex], circleEvent.EventLocation);
+                if (intercept.Y != float.NegativeInfinity && intercept != vertex)
                 {
-                    //we want circle event location to be droped lower by radius to x val
-                    //we want to calculate radius and store it with the event
                     VEdge parentEdgeOfNewEdge = edges[beachTree[parentEdgeOfNewEdgeIndex].EdgeIndex];
                     float radius = Vector2.Distance(arcs[parentEdgeOfNewEdge.LeftArcIndex].Focus, intercept);
                     intercept.Y -= radius;
                     VEvent newCircleEvent = new VEvent(intercept, EventType.CircleEvent);
                     priorityQueue.Enqueue(newCircleEvent);
+
                     events.Add(newCircleEvent, new VEventInfo()
                     {
                         Radius = radius,
@@ -379,8 +386,153 @@ namespace Vorannoyed
                     //beachTree[newEdge.RightArcIndex] = arc;
                 }
             }
+            
+            if (closestLeftEdgeIndex != newEdgeIndex)//here
+            {
+                newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+                Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[closestLeftEdgeIndex].EdgeIndex], circleEvent.EventLocation);
+                if (intercept.Y != float.NegativeInfinity && intercept != vertex)
+                {
+                    VEdge closestLeftEdgeOfNewEdge = edges[beachTree[closestLeftEdgeIndex].EdgeIndex];
+                    float radius = Vector2.Distance(arcs[closestLeftEdgeOfNewEdge.LeftArcIndex].Focus, intercept);
+                    intercept.Y -= radius;
+                    VEvent newCircleEvent = new VEvent(intercept, EventType.CircleEvent);
+                    priorityQueue.Enqueue(newCircleEvent);
+
+                    events.Add(newCircleEvent, new VEventInfo()
+                    {
+                        Radius = radius,
+                        VEdgeOneIndex = newEdgeIndex,
+                        VEdgeTwoIndex = closestLeftEdgeIndex,
+                    });
+
+                    //add to leafs
+                    VArc arc = arcs[closestLeftEdgeOfNewEdge.LeftArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+
+                    arc = arcs[closestLeftEdgeOfNewEdge.RightArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+
+                    newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+
+                    arc = arcs[newEdge.RightArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+                }
+            }
+            
+            if (closestRightEdgeIndex != newEdgeIndex)
+            {
+                newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+                Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[closestRightEdgeIndex].EdgeIndex], circleEvent.EventLocation);
+                if (intercept.Y != float.NegativeInfinity && intercept != vertex)
+                {
+                    VEdge closestRightEdgeOfNewEdge = edges[beachTree[closestRightEdgeIndex].EdgeIndex];
+                    float radius = Vector2.Distance(arcs[closestRightEdgeOfNewEdge.LeftArcIndex].Focus, intercept);
+                    intercept.Y -= radius;
+                    VEvent newCircleEvent = new VEvent(intercept, EventType.CircleEvent);
+                    priorityQueue.Enqueue(newCircleEvent);
+
+                    events.Add(newCircleEvent, new VEventInfo()
+                    {
+                        Radius = radius,
+                        VEdgeOneIndex = newEdgeIndex,
+                        VEdgeTwoIndex = closestRightEdgeIndex,
+                    });
+
+                    //add to leafs
+                    VArc arc = arcs[closestRightEdgeOfNewEdge.LeftArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+
+                    arc = arcs[closestRightEdgeOfNewEdge.RightArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+
+                    newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+
+                    arc = arcs[newEdge.RightArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+                }
+            }
+            
         }
 
+        private int getClosestLeftAncestor(int edgeIndex)
+        {
+            int retVal = edgeIndex;
+            int currentDescendant = edgeIndex;
+            int parentIndex = getParentIndex(edgeIndex);
+            if(getRightChildIndex(parentIndex) == currentDescendant)
+            {
+                retVal = currentDescendant;
+            }
+            else
+            {
+                while (parentIndex != 0)
+                {
+                    currentDescendant = parentIndex;
+                    parentIndex = getParentIndex(parentIndex);
+                    if (getRightChildIndex(parentIndex) == currentDescendant)
+                    {
+                        retVal = parentIndex;
+                        parentIndex = 0;
+                    }
+                }
+            }
+            return retVal;
+        }
+
+        private int getClosestLeftEdgeIndex(int edgeIndex)
+        {
+            int retVal = edgeIndex;
+            int leftChildIndex = getLeftChildIndex(edgeIndex);
+            if (beachTree[leftChildIndex] != null && beachTree[leftChildIndex].IsEdge)
+            {
+                retVal = leftChildIndex;
+                while (hasRightChild(retVal))
+                {
+                    retVal = getRightChildIndex(retVal);
+                    if (beachTree[retVal].IsEdge == false)
+                    {
+                        return getParentIndex(retVal);
+                    }
+                }
+            }
+            return retVal;
+        }
+
+        private int getClosestRightEdgeIndex(int edgeIndex)
+        {
+            int retVal = edgeIndex;
+            int leftChildIndex = getRightChildIndex(edgeIndex);
+            if (beachTree[leftChildIndex] != null && beachTree[leftChildIndex].IsEdge)
+            {
+                retVal = leftChildIndex;
+                while (hasLeftChild(retVal))
+                {
+                    retVal = getLeftChildIndex(retVal);
+                    if (beachTree[retVal].IsEdge == false)
+                    {
+                        return getParentIndex(retVal);
+                    }
+                }
+            }
+            return retVal;
+        }
+
+        private IEnumerable InorderEdges(BeachLineItem[] beachTree, int index)
+        {
+            if (beachTree[index] != null || beachTree[index].IsEdge)
+            {
+                foreach (int edgeIndex in InorderEdges(beachTree, getLeftChildIndex(index)))
+                {
+                    yield return edgeIndex;
+                }
+                yield return edges[beachTree[index].EdgeIndex];
+                foreach (int edgeIndex in InorderEdges(beachTree, getRightChildIndex(index)))
+                {
+                    yield return edgeIndex;
+                }
+            }
+        }
         private int getSibling(int siblingIndex)
         {
             int parentIndex = getParentIndex(siblingIndex);
@@ -394,7 +546,7 @@ namespace Vorannoyed
             }
         }
 
-        private void copyTree(int target, int treeStart)
+        private void copyTree(int target, int treeStart, ref Dictionary<VEvent, VEventInfo> events)
         {
             if (beachTree[treeStart] == null)
             {
@@ -402,11 +554,28 @@ namespace Vorannoyed
             }
 
             beachTree[target] = beachTree[treeStart];
+            if (beachTree[treeStart].IsEdge)
+            {
+                //update related circle events to edge
+                VEdge edge = edges[beachTree[treeStart].EdgeIndex];
+                VArc arc = arcs[edge.LeftArcIndex];
+                foreach (VEvent circleEventLocation in arc.CircleEventLocations)
+                {
+                    if (events[circleEventLocation].VEdgeTwoIndex == treeStart)
+                    {
+                        events[circleEventLocation].VEdgeTwoIndex = target;
+                    }
+                    else if (events[circleEventLocation].VEdgeOneIndex == treeStart)
+                    {
+                        events[circleEventLocation].VEdgeOneIndex = target;
+                    }
+                }
+            }
             beachTree[treeStart] = null;
 
-            copyTree(getLeftChildIndex(target), getLeftChildIndex(treeStart));
+            copyTree(getLeftChildIndex(target), getLeftChildIndex(treeStart), ref events);
 
-            copyTree(getRightChildIndex(target), getRightChildIndex(treeStart));
+            copyTree(getRightChildIndex(target), getRightChildIndex(treeStart), ref events);
         }
 
         //locate the existing arc (if any) that is above the new site
@@ -626,7 +795,7 @@ namespace Vorannoyed
         {
             foreach (VEvent circleEventSite in (arcs[beachTree[arcIndex].ArcIndex]).CircleEventLocations)
             {
-                bool test = events.ContainsKey(circleEventSite);
+                bool test = events.ContainsKey(circleEventSite);//<--- delete
                 Vector2 cricleEventSiteCenter = new Vector2()
                 {
                     X = circleEventSite.EventLocation.X,
