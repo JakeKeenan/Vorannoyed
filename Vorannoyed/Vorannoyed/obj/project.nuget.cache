@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "gWgsUB99qtvXAM/I6F81MDjnNJ3bpUVmxq7WhzTU9gUbb2EfUTziFkuMBq5Y0oji9Yo6Qd3zOZqMkCLIhCpO9g==",
+  "dgSpecHash": "SRVuGgKFYelgQZY3UQsTX8ckJh3g5BP6G9GxOOnvD9XKBBPxiJt2SnkBcNyaCWvu843eedHaBkHS48AS/DAY5A==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Jake Keenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
+  "projectFilePath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Jake Keenan\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\Jake Keenan\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512",

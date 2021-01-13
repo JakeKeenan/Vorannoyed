@@ -6,8 +6,9 @@ using System.Text;
 namespace Vorannoyed
 {
     public class VorannoyedFactory
-    {
-        private static Dictionary<Vector2, VTile> tiles;
+    { 
+        private static VTile[] tiles;
+        private static int currentTileIndex;
         private static List<Vector2> vertices;
         private static List<VHalfEdge> halfEdges;
 
@@ -33,7 +34,8 @@ namespace Vorannoyed
 
         public static VoronoiDiagram MakeVoronoiSF(List<Vector2> seeds, Vector2 boundry)
         {
-            tiles = new Dictionary<Vector2, VTile>();
+            tiles = new VTile[seeds.Count];
+            currentTileIndex = 0;
             vertices = new List<Vector2>();
             halfEdges = new List<VHalfEdge>();
 
@@ -61,6 +63,8 @@ namespace Vorannoyed
             VoronoiDiagram retVal = new VoronoiDiagram()
             {
                 Verticies = vertices.ToArray(),
+                Tiles = tiles,
+                HalfEdges = halfEdges
             };
 
             tiles = null;
@@ -77,7 +81,8 @@ namespace Vorannoyed
         {
             if (et == EventType.VertexEvent)
             {
-                beachLine.HandleVertexEvent(vEvent.EventLocation, halfEdges, ref events, ref tiles, ref priorityQueue);
+                beachLine.HandleVertexEvent(vEvent.EventLocation, halfEdges, ref events, ref tiles, currentTileIndex, ref priorityQueue);
+                currentTileIndex++;
             }
             else if (et == EventType.CircleEvent)
             {

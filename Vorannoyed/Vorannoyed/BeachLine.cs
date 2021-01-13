@@ -19,13 +19,13 @@ namespace Vorannoyed
             edges = new List<VEdge>();
         }
 
-        internal void HandleVertexEvent(Vector2 eventLocation, List<VHalfEdge> halfEdges, ref Dictionary<VEvent, VEventInfo> events, ref Dictionary<Vector2, VTile> tiles, ref PriorityQueue priorityQueue)
+        internal void HandleVertexEvent(Vector2 eventLocation, List<VHalfEdge> halfEdges, ref Dictionary<VEvent, VEventInfo> events, ref VTile[] tiles, int curTileIndex, ref PriorityQueue priorityQueue)
         {
             //locate the existing arc (if any) that is above the new site
             int arcIndex = getExistingArc(beachTree, eventLocation);
             //break the arc by replacing the leaf node with a sub tree representing
             //the new arc and its break points
-
+            tiles[curTileIndex] = new VTile(eventLocation);
             if (arcIndex == -1)
             {
                 //beachTree[0] = new VArc(eventLocation);
@@ -35,15 +35,37 @@ namespace Vorannoyed
                     IsEdge = false,
                     ArcIndex = arcs.Count,
                 };
-                arcs.Add(new VArc(eventLocation));
-                tiles.Add(eventLocation, new VTile(eventLocation));
+                arcs.Add(new VArc(eventLocation, tiles[curTileIndex]));
             }
             else
             {
                 //Corresponding leaf replaced by a new sub-tree
                 removeRelatedCircleEvent(arcIndex, eventLocation, ref events);
-                VArc newArc = new VArc(eventLocation);
+                VArc newArc = new VArc(eventLocation, tiles[curTileIndex]);
                 VArc arc = arcs[beachTree[arcIndex].ArcIndex];
+
+
+                //Add two half-edge records in the doubly linked list
+                VHalfEdge halfEdge = new VHalfEdge()//pm pl
+                {
+                    Tile = newArc.Tile,
+                };
+                halfEdges.Add(halfEdge);
+                VHalfEdge twinHalfEdge = new VHalfEdge()//pl pm
+                {
+                    Tile = arc.Tile,
+                };
+                //edges[edges.Count - 1].HalfEdge = halfEdge;
+                //edges[edges.Count - 2].HalfEdge = twinHalfEdge;
+                halfEdges.Add(twinHalfEdge);
+                halfEdge.Twin = twinHalfEdge;
+                twinHalfEdge.Twin = halfEdge;
+                newArc.Tile.Neighbors.AddLast(arc.Tile);
+                arc.Tile.Neighbors.AddLast(newArc.Tile);
+                newArc.Tile.Edges.AddLast(halfEdge);//halfedge belongs to the newArc created
+                arc.Tile.Edges.AddLast(twinHalfEdge);//created twinedge belongs to the split collided arc
+
+
                 int leftChildIndex = getLeftChildIndex(arcIndex);
                 beachTree[leftChildIndex] = new BeachLineItem()
                 {
@@ -66,54 +88,24 @@ namespace Vorannoyed
                     IsEdge = false,
                     ArcIndex = arcs.Count,
                 }; //arc;
-                arcs.Add(new VArc(arc.Focus));
+                arcs.Add(new VArc(arc.Focus, arc.Tile));
                 beachTree[rChild] = new BeachLineItem()
                 {
                     IsEdge = true,
                     EdgeIndex = edges.Count,
-                }; //new VEdge(getLeftChildIndex(rChild), getRightChildIndex(rChild)); // pm pl
-                edges.Add(new VEdge(beachTree[getLeftChildIndex(rChild)].ArcIndex, beachTree[getRightChildIndex(rChild)].ArcIndex));
-                //((VEdge)beachTree[rChild]).HalfEdgeIndex = halfEdges.Count;
-                edges[edges.Count - 1].HalfEdgeIndex = halfEdges.Count;
+                }; 
+                edges.Add(new VEdge(beachTree[getLeftChildIndex(rChild)].ArcIndex, beachTree[getRightChildIndex(rChild)].ArcIndex, twinHalfEdge));
+                //edges[edges.Count - 1].HalfEdge = halfEdges.Count;
                 beachTree[arcIndex] = new BeachLineItem()
                 {
                     IsEdge = true,
                     EdgeIndex = edges.Count,
-                };//new VEdge(leftChildIndex, getLeftChildIndex(rChild)); // pl pm
-                edges.Add(new VEdge(beachTree[leftChildIndex].ArcIndex, beachTree[getLeftChildIndex(rChild)].ArcIndex));
-                //((VEdge)beachTree[arcIndex]).HalfEdgeIndex = halfEdges.Count + 1;
-                edges[edges.Count - 1].HalfEdgeIndex = halfEdges.Count;
+                };
+                edges.Add(new VEdge(beachTree[leftChildIndex].ArcIndex, beachTree[getLeftChildIndex(rChild)].ArcIndex, halfEdge));
+                //edges[edges.Count - 1].HalfEdge = halfEdges.Count + 1;
 
-                //Add two half-edge records in the doubly linked list
-                //cells.Add(new VCell(arc.Focus));
-                if (!tiles.ContainsKey(newArc.Focus))
-                {
-                    tiles.Add(newArc.Focus, new VTile(newArc.Focus));
-                }
-                VHalfEdge halfEdge = new VHalfEdge()//pm pl
-                {
-                    StartVertexIndex = -1,
-                    EndVertexIndex = -1,
-                    TwinIndex = halfEdges.Count + 1,
-                    VTileKey = newArc.Focus,
-                    NextIndex = -1,
-                    PreviousIndex = -1,
-                };
-                halfEdges.Add(halfEdge);
-                if (!tiles.ContainsKey(newArc.Focus))
-                {
-                    tiles.Add(newArc.Focus, new VTile(newArc.Focus));
-                }
-                VHalfEdge nHalfEdge = new VHalfEdge()//pl pm
-                {
-                    StartVertexIndex = -1,
-                    EndVertexIndex = -1,
-                    TwinIndex = halfEdges.Count - 1,
-                    VTileKey = arc.Focus,
-                    NextIndex = -1,
-                    PreviousIndex = -1,
-                };
-                halfEdges.Add(nHalfEdge);
+                
+
                 //Check for potential circle events, add them to event queue if they exist
                 if (!hasParent(arcIndex))
                 {
@@ -130,10 +122,13 @@ namespace Vorannoyed
                 {
                     VEdge leftParentEdge = edges[beachTree[leftParentIndex].EdgeIndex];
                     Vector2 intercept = getRayIntercept(leftCreatedHalfEdge, leftParentEdge, eventLocation);
-                    if (intercept.Y != float.NegativeInfinity)
+                    
+                    if (intercept.Y != float.NegativeInfinity)//probably don't need this check?
                     {
                         //we want circle event location to be droped lower by radius to x val
                         //we want to calculate radius and store it with the event
+                        //we add starting point to the halfedge that belongs to the newArc
+                        //halfEdge.Start = intercept;
                         float radius = Vector2.Distance((arcs[leftCreatedHalfEdge.LeftArcIndex]).Focus, intercept);
                         intercept.Y -= radius;
                         VEvent newCircleEvent = new VEvent(intercept, EventType.CircleEvent);
@@ -171,6 +166,8 @@ namespace Vorannoyed
                     {
                         //we want circle event location to be droped lower by radius to x val
                         //we want to calculate radius and store it with the event
+                        //we add starting point to the halfedge that belongs to the newArc
+                        //twinHalfEdge.Start = intercept;
                         float radius = Vector2.Distance((arcs[rightCreatedHalfEdge.LeftArcIndex]).Focus, intercept);
                         intercept.Y -= radius;
                         VEvent newCircleEvent = new VEvent(intercept, EventType.CircleEvent);
@@ -273,15 +270,14 @@ namespace Vorannoyed
             Vector2 vertex = new Vector2(circleEvent.EventLocation.X, circleEvent.EventLocation.Y + evnt.Radius);
             vertices.Add(vertex);
 
-            VHalfEdge halfEdgeOne = halfEdges[vEdgeOne.HalfEdgeIndex];
-            VHalfEdge halfEdgeOneTwin = halfEdges[halfEdgeOne.TwinIndex];
-            halfEdgeOne.StartVertexIndex = vertices.Count - 1;
-            halfEdgeOneTwin.EndVertexIndex = vertices.Count - 1;
+            //The two halfEdges that are colliding
+            VHalfEdge halfEdgeOne = vEdgeOne.HalfEdge;
+            halfEdgeOne.End = vertex;
 
-            VHalfEdge halfEdgeTwo = halfEdges[vEdgeTwo.HalfEdgeIndex];
-            VHalfEdge halfEdgeTwoTwin = halfEdges[halfEdgeTwo.TwinIndex];
-            halfEdgeTwo.StartVertexIndex = vertices.Count - 1;
-            halfEdgeTwoTwin.EndVertexIndex = vertices.Count - 1;
+            VHalfEdge halfEdgeTwo = vEdgeTwo.HalfEdge;
+            halfEdgeTwo.End = vertex;
+
+            
 
             //Deleting disappearing arc
             //Create new edge record
@@ -294,11 +290,47 @@ namespace Vorannoyed
             //copyTree(evnt.VEdgeTwoIndex, getSibling(evnt.VEdgeTwoIndex));
 
             VEdge newEdge;
+            VHalfEdge newHalfEdge = new VHalfEdge();
+            VHalfEdge newHalfEdgeTwin = new VHalfEdge()
+            {
+                End = vertex,
+                Twin = newHalfEdge
+            };
+            newHalfEdge.Twin = newHalfEdgeTwin;
+            halfEdges.Add(newHalfEdge);
+            halfEdges.Add(newHalfEdgeTwin);
+            if (halfEdgeOne.Tile == halfEdgeTwo.Twin.Tile)
+            {
+                halfEdgeOne.Next = halfEdgeTwo.Twin;
+                halfEdgeTwo.Twin.Prev = halfEdgeOne;
+                halfEdgeTwo.Next = newHalfEdge;
+                newHalfEdge.Prev = halfEdgeTwo;
+                newHalfEdge.Tile = halfEdgeTwo.Tile;
+                newHalfEdgeTwin.Next = halfEdgeOne.Twin;
+                halfEdgeOne.Twin.Prev = newHalfEdgeTwin;
+                newHalfEdgeTwin.Tile = halfEdgeOne.Twin.Tile;
+                newHalfEdge.Tile.Edges.AddLast(newHalfEdge);
+                newHalfEdgeTwin.Tile.Edges.AddLast(newHalfEdgeTwin);
+            }
+            else
+            {
+                halfEdgeOne.Next = newHalfEdge;
+                newHalfEdge.Prev = halfEdgeOne;
+                newHalfEdgeTwin.Next = halfEdgeTwo.Twin;
+                halfEdgeTwo.Twin.Prev = newHalfEdgeTwin;
+                halfEdgeTwo.Next = halfEdgeOne.Twin;
+                halfEdgeOne.Twin.Prev = halfEdgeTwo;
+                newHalfEdge.Tile = halfEdgeOne.Tile;
+                newHalfEdgeTwin.Tile = halfEdgeTwo.Twin.Tile;
+                newHalfEdge.Tile.Edges.AddLast(newHalfEdge);
+                newHalfEdgeTwin.Tile.Edges.AddLast(newHalfEdgeTwin);
+            }
+
             if (arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.LeftArcIndex].Focus || arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.RightArcIndex].Focus)
             {
                 if (arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.LeftArcIndex].Focus)
                 {
-                    newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex);
+                    newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex,  newHalfEdge);
                     //newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
                     beachTree[evnt.VEdgeOneIndex].IsEdge = true;
@@ -309,7 +341,7 @@ namespace Vorannoyed
                 }
                 else
                 {
-                    newEdge = new VEdge(vEdgeTwo.LeftArcIndex, vEdgeOne.RightArcIndex);
+                    newEdge = new VEdge(vEdgeTwo.LeftArcIndex, vEdgeOne.RightArcIndex, newHalfEdge);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
                     beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
@@ -323,7 +355,7 @@ namespace Vorannoyed
                 //vEdgeOne.RightArcIndex;
                 if (arcs[vEdgeOne.RightArcIndex].Focus == arcs[vEdgeTwo.RightArcIndex].Focus)
                 {
-                    newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.LeftArcIndex);
+                    newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.LeftArcIndex, newHalfEdge);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
                     beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
@@ -332,7 +364,7 @@ namespace Vorannoyed
                 }
                 else
                 {
-                    newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex);
+                    newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
                     beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
@@ -341,6 +373,8 @@ namespace Vorannoyed
                     //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
                 }
             }
+
+
             //need to look left and right,
             events[circleEvent].Deleted = true;//look here... 10-26
             //evnt.VEdgeOneIndex
@@ -353,7 +387,7 @@ namespace Vorannoyed
             //Check the new triplets for potential circle events
             if (parentEdgeOfNewEdgeIndex != newEdgeIndex)
             {
-                newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+                newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];//probably not a need line?
                 Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[parentEdgeOfNewEdgeIndex].EdgeIndex], circleEvent.EventLocation);
                 if (intercept.Y != float.NegativeInfinity && intercept != vertex)
                 {
@@ -579,6 +613,7 @@ namespace Vorannoyed
         }
 
         //locate the existing arc (if any) that is above the new site
+        //eventIntersection is the location of intersection between the event in question with the most relavant arc on the beachline
         private int getExistingArc(BeachLineItem[] beachTree, Vector2 eventLocation)
         {
             if (beachTree[0] == null)
@@ -597,9 +632,10 @@ namespace Vorannoyed
                 if (!isLeafNode(nodeIndex))
                 {
                     VEdge edgeNode = edges[beachTree[nodeIndex].EdgeIndex];
-                    float rightIntercept = getPorabolaRightIntercept(arcs[edgeNode.LeftArcIndex], arcs[edgeNode.RightArcIndex], eventLocation);
+                    float rightXIntercept = getPorabolaRightIntercept(arcs[edgeNode.LeftArcIndex], arcs[edgeNode.RightArcIndex], eventLocation);
+                    
                     ensureExtraCapacity(getLeftChildIndex(nodeIndex));
-                    if (rightIntercept < eventLocation.X && !float.IsNaN(rightIntercept))
+                    if (rightXIntercept < eventLocation.X && !float.IsNaN(rightXIntercept))
                     {
                         nodeIndex = getRightChildIndex(nodeIndex);
                     }
@@ -624,18 +660,22 @@ namespace Vorannoyed
                     }
                     else
                     {
+                        //arcNotFound = false;
+                        //float rightYIntercept = solveForY(arcs[edgeNode.LeftArcIndex], rightXIntercept, eventLocation);
+                        //eventIntersection.Y = solveForY(arcs[beachTree[nodeIndex].ArcIndex], eventIntersection.X, eventLocation);
                         return getLeftChildIndex(nodeIndex);
                     }
                 }
                 else
                 {
+                    //arcNotFound = false;
                     return nodeIndex;
                 }
             }
             return -1;
         }
 
-        //going from left to right on the line of the left Arc, return the first intersection with the right Arc
+        //going from left to right on the curve of the left Arc, return the first intersection with the right Arc
         private float getPorabolaRightIntercept(VArc leftArc, VArc rightArc, Vector2 eventLocation)
         {
             if (leftArc.Focus.Y == eventLocation.Y)

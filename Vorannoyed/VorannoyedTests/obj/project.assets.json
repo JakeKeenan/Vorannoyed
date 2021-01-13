@@ -4709,11 +4709,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Jake Keenan\\source\\repos\\Vorannoyed\\Vorannoyed\\VorannoyedTests\\VorannoyedTests.csproj",
+      "projectUniqueName": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\VorannoyedTests\\VorannoyedTests.csproj",
       "projectName": "VorannoyedTests",
-      "projectPath": "C:\\Users\\Jake Keenan\\source\\repos\\Vorannoyed\\Vorannoyed\\VorannoyedTests\\VorannoyedTests.csproj",
+      "projectPath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\VorannoyedTests\\VorannoyedTests.csproj",
       "packagesPath": "C:\\Users\\Jake Keenan\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Jake Keenan\\source\\repos\\Vorannoyed\\Vorannoyed\\VorannoyedTests\\obj\\",
+      "outputPath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\VorannoyedTests\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Microsoft\\Xamarin\\NuGet\\"
@@ -4734,8 +4734,8 @@
         "netcoreapp3.1": {
           "targetAlias": "netcoreapp3.1",
           "projectReferences": {
-            "C:\\Users\\Jake Keenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj": {
-              "projectPath": "C:\\Users\\Jake Keenan\\source\\repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj"
+            "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj": {
+              "projectPath": "C:\\Users\\Jake Keenan\\Source\\Repos\\Vorannoyed\\Vorannoyed\\Vorannoyed\\Vorannoyed.csproj"
             }
           }
         }
