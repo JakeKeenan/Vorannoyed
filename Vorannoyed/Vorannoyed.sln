@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vorannoyed", "Vorannoyed\Vo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VorannoyedTests", "VorannoyedTests\VorannoyedTests.csproj", "{EFECAD34-9591-4DB2-92F5-6DB2EDDA7670}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VorannoyedSvgRunner", "VorannoyedSvgRunner\VorannoyedSvgRunner.csproj", "{C4A996C1-7DE7-46D7-B58C-32D7F4D5A2E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{EFECAD34-9591-4DB2-92F5-6DB2EDDA7670}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EFECAD34-9591-4DB2-92F5-6DB2EDDA7670}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EFECAD34-9591-4DB2-92F5-6DB2EDDA7670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4A996C1-7DE7-46D7-B58C-32D7F4D5A2E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4A996C1-7DE7-46D7-B58C-32D7F4D5A2E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4A996C1-7DE7-46D7-B58C-32D7F4D5A2E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4A996C1-7DE7-46D7-B58C-32D7F4D5A2E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
