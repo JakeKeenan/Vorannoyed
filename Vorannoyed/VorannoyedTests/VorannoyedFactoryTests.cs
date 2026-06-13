@@ -25,7 +25,7 @@ namespace Vorannoyed.Tests
             //Act
             VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(Seeds, Boundry);
             //Assert
-            Assert.AreEqual(expectedVerticies, actual.Verticies);
+            Assert.That(actual.Verticies, Is.EqualTo(expectedVerticies));
         }
 
         [Test]
@@ -50,8 +50,8 @@ namespace Vorannoyed.Tests
             Vector2[] actualVerticies = actual.Verticies;
             for (int i = 0; i < actualVerticies.Length; i++)
             {
-                Assert.AreEqual(expectedVerticies[i].X, actualVerticies[i].X, 0.05);
-                Assert.AreEqual(expectedVerticies[i].Y, actualVerticies[i].Y, 0.05);
+                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
+                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
         }
 
@@ -76,8 +76,8 @@ namespace Vorannoyed.Tests
             Vector2[] actualVerticies = actual.Verticies;
             for (int i = 0; i < actualVerticies.Length; i++)
             {
-                Assert.AreEqual(expectedVerticies[i].X, actualVerticies[i].X, 0.05);
-                Assert.AreEqual(expectedVerticies[i].Y, actualVerticies[i].Y, 0.05);
+                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
+                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
         }
 
@@ -102,8 +102,8 @@ namespace Vorannoyed.Tests
             Vector2[] actualVerticies = actual.Verticies;
             for (int i = 0; i < actualVerticies.Length; i++)
             {
-                Assert.AreEqual(expectedVerticies[i].X, actualVerticies[i].X, 0.05);
-                Assert.AreEqual(expectedVerticies[i].Y, actualVerticies[i].Y, 0.05);
+                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
+                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
         }
 
@@ -129,8 +129,8 @@ namespace Vorannoyed.Tests
             Vector2[] actualVerticies = actual.Verticies;
             for (int i = 0; i < actualVerticies.Length; i++)
             {
-                Assert.AreEqual(expectedVerticies[i].X, actualVerticies[i].X, 0.05);
-                Assert.AreEqual(expectedVerticies[i].Y, actualVerticies[i].Y, 0.05);
+                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
+                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
         }
 
@@ -156,8 +156,8 @@ namespace Vorannoyed.Tests
             Vector2[] actualVerticies = actual.Verticies;
             for (int i = 0; i < actualVerticies.Length; i++)
             {
-                Assert.AreEqual(expectedVerticies[i].X, actualVerticies[i].X, 0.05);
-                Assert.AreEqual(expectedVerticies[i].Y, actualVerticies[i].Y, 0.05);
+                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
+                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
         }
     }

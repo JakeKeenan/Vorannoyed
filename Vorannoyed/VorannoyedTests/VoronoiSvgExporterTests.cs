@@ -31,14 +31,14 @@ namespace Vorannoyed.Tests
                 boundary,
                 new VoronoiSvgExportOptions { DrawLabels = true });
 
-            StringAssert.Contains("<svg", svg);
-            StringAssert.Contains("class=\"voronoi-cell\"", svg);
-            StringAssert.Contains("class=\"voronoi-edge\"", svg);
-            StringAssert.Contains("class=\"voronoi-ray\"", svg);
-            StringAssert.Contains("class=\"voronoi-seed\"", svg);
-            StringAssert.Contains("class=\"voronoi-vertex\"", svg);
-            StringAssert.Contains(">S0</text>", svg);
-            StringAssert.Contains(">V0</text>", svg);
+            Assert.That(svg, Does.Contain("<svg"));
+            Assert.That(svg, Does.Contain("class=\"voronoi-cell\""));
+            Assert.That(svg, Does.Contain("class=\"voronoi-edge\""));
+            Assert.That(svg, Does.Contain("class=\"voronoi-ray\""));
+            Assert.That(svg, Does.Contain("class=\"voronoi-seed\""));
+            Assert.That(svg, Does.Contain("class=\"voronoi-vertex\""));
+            Assert.That(svg, Does.Contain(">S0</text>"));
+            Assert.That(svg, Does.Contain(">V0</text>"));
         }
 
         [Test]
@@ -62,7 +62,7 @@ namespace Vorannoyed.Tests
                 VoronoiSvgExporter.WriteDebugSvg(outputPath, diagram, seeds, boundary);
 
                 Assert.That(File.Exists(outputPath), Is.True);
-                StringAssert.Contains("<svg", File.ReadAllText(outputPath));
+                Assert.That(File.ReadAllText(outputPath), Does.Contain("<svg"));
             }
             finally
             {
