@@ -203,10 +203,10 @@ namespace Vorannoyed
                 visited.Add(halfEdge);
                 visited.Add(halfEdge.Twin);
 
-                bool halfEdgeHasVertex = IsKnownVertex(halfEdge.End, vertices);
-                bool twinHasVertex = IsKnownVertex(halfEdge.Twin.End, vertices);
+                bool halfEdgeHasEnd = halfEdge.HasEnd;
+                bool twinHasEnd = halfEdge.Twin.HasEnd;
 
-                if (options.DrawFiniteEdges && halfEdgeHasVertex && twinHasVertex)
+                if (options.DrawFiniteEdges && halfEdgeHasEnd && twinHasEnd)
                 {
                     if (Vector2.DistanceSquared(halfEdge.End, halfEdge.Twin.End) > Epsilon * Epsilon)
                     {
@@ -216,13 +216,13 @@ namespace Vorannoyed
                     continue;
                 }
 
-                if (!options.DrawClippedRays || halfEdgeHasVertex == twinHasVertex)
+                if (!options.DrawClippedRays || halfEdgeHasEnd == twinHasEnd)
                 {
                     continue;
                 }
 
-                VHalfEdge rayHalfEdge = halfEdgeHasVertex ? halfEdge.Twin : halfEdge;
-                Vector2 rayStart = halfEdgeHasVertex ? halfEdge.End : halfEdge.Twin.End;
+                VHalfEdge rayHalfEdge = halfEdgeHasEnd ? halfEdge.Twin : halfEdge;
+                Vector2 rayStart = halfEdgeHasEnd ? halfEdge.End : halfEdge.Twin.End;
                 Vector2 rayDirection = GetHalfEdgeDirection(rayHalfEdge);
 
                 if (TryClipRayToBox(rayStart, rayDirection, clipBounds, out Vector2 clippedStart, out Vector2 clippedEnd))
@@ -373,19 +373,6 @@ namespace Vorannoyed
             }
 
             return bestIndex;
-        }
-
-        private static bool IsKnownVertex(Vector2 point, Vector2[] vertices)
-        {
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (Vector2.DistanceSquared(point, vertices[i]) <= Epsilon * Epsilon)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private static Vector2 GetHalfEdgeDirection(VHalfEdge halfEdge)

@@ -160,5 +160,44 @@ namespace Vorannoyed.Tests
                 Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
         }
+
+        [Test]
+        public void VoronoiFactory_MakeVoronoiSFTest_ClipsUnfinishedBisectorToBoundary()
+        {
+            List<Vector2> seeds = new List<Vector2>
+            {
+                new Vector2(1f, 1f),
+                new Vector2(3f, 1f),
+            };
+
+            VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(seeds, new Vector2(4f, 4f));
+
+            Assert.That(actual.HalfEdges, Has.Count.EqualTo(2));
+            Assert.That(actual.HalfEdges[0].HasEnd, Is.True);
+            Assert.That(actual.HalfEdges[1].HasEnd, Is.True);
+            Assert.That(actual.HalfEdges[0].End.X, Is.EqualTo(2f).Within(0.001));
+            Assert.That(actual.HalfEdges[1].End.X, Is.EqualTo(2f).Within(0.001));
+            Assert.That(actual.HalfEdges[0].End.Y, Is.EqualTo(0f).Within(0.001).Or.EqualTo(4f).Within(0.001));
+            Assert.That(actual.HalfEdges[1].End.Y, Is.EqualTo(0f).Within(0.001).Or.EqualTo(4f).Within(0.001));
+            Assert.That(Vector2.DistanceSquared(actual.HalfEdges[0].End, actual.HalfEdges[1].End), Is.GreaterThan(0.001f));
+        }
+
+        [Test]
+        public void VoronoiFactory_MakeVoronoiSFTest_ClipsUnfinishedRaysToBoundary()
+        {
+            List<Vector2> seeds = new List<Vector2>
+            {
+                new Vector2(2f, 2f),
+                new Vector2(1f, 2f),
+                new Vector2(1.5f, 1.5f),
+                new Vector2(2f, 1f),
+                new Vector2(1f, 1f),
+            };
+
+            VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(seeds, new Vector2(3f, 3f));
+
+            Assert.That(actual.HalfEdges, Is.Not.Empty);
+            Assert.That(actual.HalfEdges, Has.All.Matches<VHalfEdge>(halfEdge => halfEdge.HasEnd));
+        }
     }
 }

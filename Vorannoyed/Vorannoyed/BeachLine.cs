@@ -19,7 +19,7 @@ namespace Vorannoyed
             edges = new List<VEdge>();
         }
 
-        internal void HandleVertexEvent(Vector2 eventLocation, List<VHalfEdge> halfEdges, ref Dictionary<VEvent, VEventInfo> events, ref VTile[] tiles, int curTileIndex, ref PriorityQueue priorityQueue)
+        internal void HandleVertexEvent(Vector2 eventLocation, List<VHalfEdge> halfEdges, HalfEdgeTracker halfEdgeTracker, ref Dictionary<VEvent, VEventInfo> events, ref VTile[] tiles, int curTileIndex, ref PriorityQueue priorityQueue)
         {
             //locate the existing arc (if any) that is above the new site
             int arcIndex = getExistingArc(beachTree, eventLocation);
@@ -58,8 +58,7 @@ namespace Vorannoyed
                 //edges[edges.Count - 1].HalfEdge = halfEdge;
                 //edges[edges.Count - 2].HalfEdge = twinHalfEdge;
                 halfEdges.Add(twinHalfEdge);
-                halfEdge.Twin = twinHalfEdge;
-                twinHalfEdge.Twin = halfEdge;
+                halfEdgeTracker.AddPair(halfEdge, twinHalfEdge);
                 newArc.Tile.Neighbors.AddLast(arc.Tile);
                 arc.Tile.Neighbors.AddLast(newArc.Tile);
                 newArc.Tile.Edges.AddLast(halfEdge);//halfedge belongs to the newArc created
@@ -260,7 +259,7 @@ namespace Vorannoyed
             }
         }
 
-        internal void HandleCircleEvent(VEvent circleEvent, List<VHalfEdge> halfEdges, ref Dictionary<VEvent, VEventInfo> events, ref List<Vector2> vertices, ref PriorityQueue priorityQueue)
+        internal void HandleCircleEvent(VEvent circleEvent, List<VHalfEdge> halfEdges, HalfEdgeTracker halfEdgeTracker, ref Dictionary<VEvent, VEventInfo> events, ref List<Vector2> vertices, ref PriorityQueue priorityQueue)
         {
             //Add vertex to corresponding edge record
             VEventInfo evnt = events[circleEvent];
@@ -272,10 +271,10 @@ namespace Vorannoyed
 
             //The two halfEdges that are colliding
             VHalfEdge halfEdgeOne = vEdgeOne.HalfEdge;
-            halfEdgeOne.End = vertex;
+            halfEdgeTracker.SetEnd(halfEdgeOne, vertex);
 
             VHalfEdge halfEdgeTwo = vEdgeTwo.HalfEdge;
-            halfEdgeTwo.End = vertex;
+            halfEdgeTracker.SetEnd(halfEdgeTwo, vertex);
 
             
 
@@ -291,14 +290,11 @@ namespace Vorannoyed
 
             VEdge newEdge;
             VHalfEdge newHalfEdge = new VHalfEdge();
-            VHalfEdge newHalfEdgeTwin = new VHalfEdge()
-            {
-                End = vertex,
-                Twin = newHalfEdge
-            };
-            newHalfEdge.Twin = newHalfEdgeTwin;
+            VHalfEdge newHalfEdgeTwin = new VHalfEdge();
             halfEdges.Add(newHalfEdge);
             halfEdges.Add(newHalfEdgeTwin);
+            halfEdgeTracker.AddPair(newHalfEdge, newHalfEdgeTwin);
+            halfEdgeTracker.SetEnd(newHalfEdgeTwin, vertex);
             if (halfEdgeOne.Tile == halfEdgeTwo.Twin.Tile)
             {
                 halfEdgeOne.Next = halfEdgeTwo.Twin;

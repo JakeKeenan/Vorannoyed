@@ -4,11 +4,23 @@ namespace Vorannoyed
 {
     public class VHalfEdge
     {
+        private Vector2 end;
+
         //managed with vertex events
         public VTile Tile { get; set; }
         //manged with circle events
-        //End: If it results in <0, 0> then that means it needs to be clipped
-        public Vector2 End { get; set; }
+        public Vector2 End
+        {
+            get { return end; }
+            set
+            {
+                end = value;
+                HasEnd = true;
+            }
+        }
+
+        public bool HasEnd { get; private set; }
+
         public VHalfEdge Next { get; set; }//going counter clockwise
         public VHalfEdge Prev { get; set; }
         //managed with vertex events

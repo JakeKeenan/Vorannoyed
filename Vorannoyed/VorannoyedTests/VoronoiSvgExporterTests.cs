@@ -34,7 +34,7 @@ namespace Vorannoyed.Tests
             Assert.That(svg, Does.Contain("<svg"));
             Assert.That(svg, Does.Contain("class=\"voronoi-cell\""));
             Assert.That(svg, Does.Contain("class=\"voronoi-edge\""));
-            Assert.That(svg, Does.Contain("class=\"voronoi-ray\""));
+            Assert.That(svg, Does.Not.Contain("class=\"voronoi-ray\""));
             Assert.That(svg, Does.Contain("class=\"voronoi-seed\""));
             Assert.That(svg, Does.Contain("class=\"voronoi-vertex\""));
             Assert.That(svg, Does.Contain(">S0</text>"));
