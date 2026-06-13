@@ -1,0 +1,64 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug SVG scenario",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build svg runner",
+      "program": "${workspaceFolder}/Vorannoyed/VorannoyedSvgRunner/bin/Debug/net10.0/VorannoyedSvgRunner.dll",
+      "args": [
+        "${input:scenarioName}",
+        "--half-edges",
+        "--output",
+        "${workspaceFolder}/Vorannoyed/artifacts/vorannoyed-svgs/${input:scenarioName}.svg"
+      ],
+      "cwd": "${workspaceFolder}/Vorannoyed",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Debug trapezoid SVG",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build svg runner",
+      "program": "${workspaceFolder}/Vorannoyed/VorannoyedSvgRunner/bin/Debug/net10.0/VorannoyedSvgRunner.dll",
+      "args": [
+        "trapezoid",
+        "--half-edges",
+        "--output",
+        "${workspaceFolder}/Vorannoyed/artifacts/vorannoyed-svgs/trapezoid.svg"
+      ],
+      "cwd": "${workspaceFolder}/Vorannoyed",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Debug two-polygon2 SVG",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build svg runner",
+      "program": "${workspaceFolder}/Vorannoyed/VorannoyedSvgRunner/bin/Debug/net10.0/VorannoyedSvgRunner.dll",
+      "args": [
+        "two-polygon2",
+        "--half-edges",
+        "--output",
+        "${workspaceFolder}/Vorannoyed/artifacts/vorannoyed-svgs/two-polygon2.svg"
+      ],
+      "cwd": "${workspaceFolder}/Vorannoyed",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "scenarioName",
+      "type": "promptString",
+      "description": "Vorannoyed SVG scenario name",
+      "default": "trapezoid"
+    }
+  ]
+}

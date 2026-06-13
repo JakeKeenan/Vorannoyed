@@ -6,18 +6,22 @@ namespace Vorannoyed
 {
     internal sealed class HalfEdgeTracker
     {
-        private readonly Dictionary<VHalfEdge, VHalfEdge> canonicalHalfEdges;
-        private readonly HashSet<VHalfEdge> unfinishedHalfEdges;
+        private const float Epsilon = 0.0001f;
 
-        public HalfEdgeTracker()
+        private readonly Dictionary<VHalfEdge, VHalfEdge> canonicalHalfEdges;
+        private readonly HashSet<VHalfEdge> clipHalfEdges;
+        private readonly Bounds bounds;
+
+        public HalfEdgeTracker(Vector2 boundary)
         {
             canonicalHalfEdges = new Dictionary<VHalfEdge, VHalfEdge>();
-            unfinishedHalfEdges = new HashSet<VHalfEdge>();
+            clipHalfEdges = new HashSet<VHalfEdge>();
+            bounds = Bounds.FromOriginAndExtent(boundary);
         }
 
-        public IReadOnlyCollection<VHalfEdge> UnfinishedHalfEdges
+        public IReadOnlyCollection<VHalfEdge> ClipHalfEdges
         {
-            get { return unfinishedHalfEdges; }
+            get { return clipHalfEdges; }
         }
 
         public void AddPair(VHalfEdge halfEdge, VHalfEdge twinHalfEdge)
@@ -59,17 +63,50 @@ namespace Vorannoyed
 
             if (canonicalHalfEdge.Twin == null)
             {
-                unfinishedHalfEdges.Add(canonicalHalfEdge);
+                clipHalfEdges.Add(canonicalHalfEdge);
                 return;
             }
 
             if (canonicalHalfEdge.HasEnd && canonicalHalfEdge.Twin.HasEnd)
             {
-                unfinishedHalfEdges.Remove(canonicalHalfEdge);
+                if (bounds.Contains(canonicalHalfEdge.End) && bounds.Contains(canonicalHalfEdge.Twin.End))
+                {
+                    clipHalfEdges.Remove(canonicalHalfEdge);
+                    return;
+                }
+
+                clipHalfEdges.Add(canonicalHalfEdge);
                 return;
             }
 
-            unfinishedHalfEdges.Add(canonicalHalfEdge);
+            clipHalfEdges.Add(canonicalHalfEdge);
+        }
+
+        private readonly struct Bounds
+        {
+            public Vector2 Min { get; }
+            public Vector2 Max { get; }
+
+            public Bounds(Vector2 min, Vector2 max)
+            {
+                Min = min;
+                Max = max;
+            }
+
+            public bool Contains(Vector2 point)
+            {
+                return point.X >= Min.X - Epsilon &&
+                    point.X <= Max.X + Epsilon &&
+                    point.Y >= Min.Y - Epsilon &&
+                    point.Y <= Max.Y + Epsilon;
+            }
+
+            public static Bounds FromOriginAndExtent(Vector2 extent)
+            {
+                return new Bounds(
+                    new Vector2(Math.Min(0f, extent.X), Math.Min(0f, extent.Y)),
+                    new Vector2(Math.Max(0f, extent.X), Math.Max(0f, extent.Y)));
+            }
         }
     }
 }

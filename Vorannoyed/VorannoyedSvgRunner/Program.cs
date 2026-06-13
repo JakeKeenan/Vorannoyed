@@ -58,7 +58,7 @@ namespace VorannoyedSvgRunner
                     }),
                 ["two-polygon"] = new Scenario(
                     "two-polygon",
-                    new Vector2(15f, 15f),
+                    new Vector2(28f, 18f),
                     new[]
                     {
                         new Vector2(10.96f, 7.53f),
@@ -69,7 +69,7 @@ namespace VorannoyedSvgRunner
                     }),
                 ["two-polygon2"] = new Scenario(
                     "two-polygon2",
-                    new Vector2(15f, 15f),
+                    new Vector2(42f, 18f),
                     new[]
                     {
                         new Vector2(28.7f, 8.47f),
@@ -94,6 +94,7 @@ namespace VorannoyedSvgRunner
                 float scale = 48f;
                 float sampleStep = 0f;
                 bool drawLabels = true;
+                bool drawHalfEdgeDirections = false;
 
                 for (int i = 0; i < args.Length; i++)
                 {
@@ -115,6 +116,10 @@ namespace VorannoyedSvgRunner
                             break;
                         case "--no-labels":
                             drawLabels = false;
+                            break;
+                        case "--half-edges":
+                        case "--half-edge-directions":
+                            drawHalfEdgeDirections = true;
                             break;
                         default:
                             if (arg.StartsWith("-", StringComparison.Ordinal))
@@ -153,6 +158,7 @@ namespace VorannoyedSvgRunner
                 VoronoiSvgExportOptions options = new VoronoiSvgExportOptions
                 {
                     DrawLabels = drawLabels,
+                    DrawHalfEdgeDirections = drawHalfEdgeDirections,
                     Scale = scale,
                     SampleStep = sampleStep,
                 };
@@ -211,6 +217,7 @@ namespace VorannoyedSvgRunner
             Console.WriteLine("  --sample-step <number>   Background sample size in world units");
             Console.WriteLine("  --labels                 Draw labels for seeds and vertices");
             Console.WriteLine("  --no-labels              Hide labels");
+            Console.WriteLine("  --half-edges             Draw colored directed half-edge overlays");
             Console.WriteLine("  --list                   Show built-in scenarios");
             Console.WriteLine("  --help, -h               Show this help");
             Console.WriteLine();

@@ -94,16 +94,16 @@ namespace Vorannoyed.Tests
             Vector2 Boundry = new Vector2(15f, 15f);
             Vector2[] expectedVerticies = {
                 new Vector2(10.938f, 8.581f), new Vector2(8.627f, 7.924f),
-                new Vector2(7.359f, 4.565f), new Vector2(16.169f, 4.565f)
+                new Vector2(7.359f, 4.565f)
             };
             //Act
             VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(Seeds, Boundry);
             //Assert
             Vector2[] actualVerticies = actual.Verticies;
-            for (int i = 0; i < actualVerticies.Length; i++)
+            Assert.That(actualVerticies, Has.Length.EqualTo(expectedVerticies.Length));
+            foreach (Vector2 expectedVertex in expectedVerticies)
             {
-                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
-                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
+                AssertContainsVertex(actualVerticies, expectedVertex);
             }
         }
 
@@ -117,7 +117,7 @@ namespace Vorannoyed.Tests
             Seeds.Add(new Vector2(10.43f, 10.2f));
             Seeds.Add(new Vector2(10.6f, 4.46f));
             Seeds.Add(new Vector2(4.16f, 16.67f));
-            Vector2 Boundry = new Vector2(15f, 15f);
+            Vector2 Boundry = new Vector2(28f, 18f);
             Vector2[] expectedVerticies = {
                 new Vector2(10.153f, 16.204f), new Vector2(16.786f, 10.074f),
                 new Vector2(1.637f, 7.067f), new Vector2(0.695f, 7.039f), 
@@ -132,6 +132,8 @@ namespace Vorannoyed.Tests
                 Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
                 Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
+
+            AssertDoesNotContainHalfEdgeBetween(actual.HalfEdges, expectedVerticies[4], expectedVerticies[0]);
         }
 
         [Test]
@@ -144,7 +146,7 @@ namespace Vorannoyed.Tests
             Seeds.Add(new Vector2(30.56f, 10.78f));
             Seeds.Add(new Vector2(29f, 5.2f));
             Seeds.Add(new Vector2(25.2f, 16.16f));
-            Vector2 Boundry = new Vector2(15f, 15f);
+            Vector2 Boundry = new Vector2(42f, 18f);
             Vector2[] expectedVerticies = {
                 new Vector2(31.754f, 17.329f), new Vector2(26.528f, 12.123f),
                 new Vector2(32.661f, 7.185f), new Vector2(11.390f, 5.233f), 
@@ -154,10 +156,10 @@ namespace Vorannoyed.Tests
             VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(Seeds, Boundry);
             //Assert
             Vector2[] actualVerticies = actual.Verticies;
-            for (int i = 0; i < actualVerticies.Length; i++)
+            Assert.That(actualVerticies, Has.Length.EqualTo(expectedVerticies.Length));
+            foreach (Vector2 expectedVertex in expectedVerticies)
             {
-                Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
-                Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
+                AssertContainsVertex(actualVerticies, expectedVertex);
             }
         }
 
@@ -198,6 +200,96 @@ namespace Vorannoyed.Tests
 
             Assert.That(actual.HalfEdges, Is.Not.Empty);
             Assert.That(actual.HalfEdges, Has.All.Matches<VHalfEdge>(halfEdge => halfEdge.HasEnd));
+        }
+
+        [Test]
+        public void VoronoiFactory_MakeVoronoiSFTest_ClipsCompletedEdgesToBoundary()
+        {
+            List<Vector2> seeds = new List<Vector2>
+            {
+                new Vector2(9.67f, 10.75f),
+                new Vector2(13.38f, 9.17f),
+                new Vector2(5.62f, 8.1f),
+                new Vector2(11f, 6.07f),
+                new Vector2(11f, 3.06f),
+            };
+
+            VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(seeds, new Vector2(15f, 15f));
+
+            Assert.That(actual.HalfEdges, Is.Not.Empty);
+            foreach (VHalfEdge halfEdge in actual.HalfEdges)
+            {
+                if (!halfEdge.HasEnd || !halfEdge.Twin.HasEnd)
+                {
+                    continue;
+                }
+
+                Assert.That(halfEdge.End.X, Is.InRange(0f, 15f));
+                Assert.That(halfEdge.End.Y, Is.InRange(0f, 15f));
+            }
+        }
+
+        [Test]
+        public void VoronoiFactory_MakeVoronoiSFTest_RemovesOutOfBoundsVertices()
+        {
+            List<Vector2> seeds = new List<Vector2>
+            {
+                new Vector2(9.67f, 10.75f),
+                new Vector2(13.38f, 9.17f),
+                new Vector2(5.62f, 8.1f),
+                new Vector2(11f, 6.07f),
+                new Vector2(11f, 3.06f),
+            };
+
+            VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(seeds, new Vector2(15f, 15f));
+
+            Assert.That(actual.Verticies, Is.Not.Empty);
+            foreach (Vector2 vertex in actual.Verticies)
+            {
+                Assert.That(vertex.X, Is.InRange(0f, 15f));
+                Assert.That(vertex.Y, Is.InRange(0f, 15f));
+            }
+        }
+
+        private static void AssertContainsVertex(Vector2[] actualVerticies, Vector2 expectedVertex)
+        {
+            foreach (Vector2 actualVertex in actualVerticies)
+            {
+                if (IsNear(actualVertex, expectedVertex))
+                {
+                    return;
+                }
+            }
+
+            Assert.Fail($"Expected vertex near {expectedVertex}, but actual vertices were: {string.Join(", ", actualVerticies)}");
+        }
+
+        private static void AssertDoesNotContainHalfEdgeBetween(List<VHalfEdge> halfEdges, Vector2 firstVertex, Vector2 secondVertex)
+        {
+            foreach (VHalfEdge halfEdge in halfEdges)
+            {
+                if (halfEdge.Twin == null || !halfEdge.HasEnd || !halfEdge.Twin.HasEnd)
+                {
+                    continue;
+                }
+
+                bool connectsVertices =
+                    IsNear(halfEdge.End, firstVertex) && IsNear(halfEdge.Twin.End, secondVertex) ||
+                    IsNear(halfEdge.End, secondVertex) && IsNear(halfEdge.Twin.End, firstVertex);
+
+                if (connectsVertices)
+                {
+                    Assert.Fail($"Did not expect a half-edge between {firstVertex} and {secondVertex}.");
+                }
+            }
+        }
+
+        private static bool IsNear(Vector2 actualVertex, Vector2 expectedVertex)
+        {
+            return actualVertex.X >= expectedVertex.X - 0.05f &&
+                actualVertex.X <= expectedVertex.X + 0.05f &&
+                actualVertex.Y >= expectedVertex.Y - 0.05f &&
+                actualVertex.Y <= expectedVertex.Y + 0.05f;
         }
     }
 }

@@ -11,9 +11,9 @@ namespace Vorannoyed
 
         private static VTile[] tiles;
         private static int currentTileIndex;
-        private static List<Vector2> vertices;
         private static List<VHalfEdge> halfEdges;
         private static HalfEdgeTracker halfEdgeTracker;
+        private static VertexTracker vertexTracker;
 
         private static PriorityQueue priorityQueue;
         private static Dictionary<VEvent, VEventInfo> events;
@@ -39,9 +39,9 @@ namespace Vorannoyed
         {
             tiles = new VTile[seeds.Count];
             currentTileIndex = 0;
-            vertices = new List<Vector2>();
             halfEdges = new List<VHalfEdge>();
-            halfEdgeTracker = new HalfEdgeTracker();
+            halfEdgeTracker = new HalfEdgeTracker(boundry);
+            vertexTracker = new VertexTracker(boundry);
 
             priorityQueue = new PriorityQueue();
             events = new Dictionary<VEvent, VEventInfo>();
@@ -52,37 +52,70 @@ namespace Vorannoyed
                 priorityQueue.Enqueue(newEvent);
                 events.Add(newEvent, null);
             }
-
             beachLine = new BeachLine();
 
             while (priorityQueue.NotEmpty)
             {
                 VEvent nextEvent = priorityQueue.Dequeue();
+                PrintResultingHalfEdges(halfEdges);
                 VEventInfo evtInfo = events[nextEvent];
                 if (evtInfo == null || evtInfo.Deleted != true)
                 {
                     handleEvent(nextEvent, nextEvent.EventType, halfEdges);
                 }
             }
+            PrintResultingHalfEdges(halfEdges);
 
-            ClipUnfinishedHalfEdges(boundry);
+            ClipTrackedHalfEdges(boundry);
+
+
+            PrintResultingHalfEdges(halfEdges);
 
             VoronoiDiagram retVal = new VoronoiDiagram()
             {
-                Verticies = vertices.ToArray(),
+                Verticies = vertexTracker.GetBoundedVertices(),
                 Tiles = tiles,
                 HalfEdges = halfEdges
             };
 
+            
+
             tiles = null;
-            vertices = null;
             halfEdges = null;
             priorityQueue = null;
             events = null;
             beachLine = null;
             halfEdgeTracker = null;
+            vertexTracker = null;
 
             return retVal;
+        }
+
+        private static void PrintResultingHalfEdges(List<VHalfEdge> halfEdges)
+        {
+            Console.WriteLine("Resulting half edges:");
+
+            for (int i = 0; i < halfEdges.Count; i++)
+            {
+                VHalfEdge halfEdge = halfEdges[i];
+                string start = halfEdge.Twin != null && halfEdge.Twin.HasEnd ? halfEdge.Twin.End.ToString() : "<none>";
+                string end = halfEdge.HasEnd ? halfEdge.End.ToString() : "<none>";
+                string tileSite = halfEdge.Tile != null ? halfEdge.Tile.Site.ToString() : "<null>";
+                string twinTileSite = halfEdge.Twin != null && halfEdge.Twin.Tile != null ? halfEdge.Twin.Tile.Site.ToString() : "<null>";
+
+                Console.WriteLine(
+                    $"  h{i}: start={start}, end={end}, tile={tileSite}, twin={GetHalfEdgeIndex(halfEdges, halfEdge.Twin)}, twinTile={twinTileSite}, next={GetHalfEdgeIndex(halfEdges, halfEdge.Next)}, prev={GetHalfEdgeIndex(halfEdges, halfEdge.Prev)}");
+            }
+        }
+
+        private static int GetHalfEdgeIndex(List<VHalfEdge> halfEdges, VHalfEdge halfEdge)
+        {
+            if (halfEdge == null)
+            {
+                return -1;
+            }
+
+            return halfEdges.IndexOf(halfEdge);
         }
 
         private static void handleEvent(VEvent vEvent, EventType et, List<VHalfEdge> halfEdges)
@@ -94,28 +127,22 @@ namespace Vorannoyed
             }
             else if (et == EventType.CircleEvent)
             {
-                beachLine.HandleCircleEvent(vEvent, halfEdges, halfEdgeTracker, ref events, ref vertices, ref priorityQueue);
+                beachLine.HandleCircleEvent(vEvent, halfEdges, halfEdgeTracker, vertexTracker, ref events, ref priorityQueue);
             }
         }
 
-        private static void ClipUnfinishedHalfEdges(Vector2 boundry)
+        private static void ClipTrackedHalfEdges(Vector2 boundry)
         {
             Bounds bounds = Bounds.FromOriginAndExtent(boundry);
-            List<VHalfEdge> unfinishedHalfEdges = new List<VHalfEdge>(halfEdgeTracker.UnfinishedHalfEdges);
+            List<VHalfEdge> clipHalfEdges = new List<VHalfEdge>(halfEdgeTracker.ClipHalfEdges);
 
-            foreach (VHalfEdge halfEdge in unfinishedHalfEdges)
+            foreach (VHalfEdge halfEdge in clipHalfEdges)
             {
-                if (halfEdge == null || halfEdge.Twin == null)
-                {
-                    continue;
-                }
-
                 if (halfEdge.HasEnd && halfEdge.Twin.HasEnd)
                 {
-                    continue;
+                    ClipFinishedSegment(halfEdge, halfEdge.Twin, bounds);
                 }
-
-                if (halfEdge.HasEnd || halfEdge.Twin.HasEnd)
+                else if (halfEdge.HasEnd || halfEdge.Twin.HasEnd)
                 {
                     ClipUnfinishedRay(halfEdge, halfEdge.Twin, bounds);
                 }
@@ -124,6 +151,17 @@ namespace Vorannoyed
                     ClipUnfinishedLine(halfEdge, halfEdge.Twin, bounds);
                 }
             }
+        }
+
+        private static void ClipFinishedSegment(VHalfEdge halfEdge, VHalfEdge twinHalfEdge, Bounds bounds)
+        {
+            if (!TryClipSegmentToBox(halfEdge.End, twinHalfEdge.End, bounds, out Vector2 clippedStart, out Vector2 clippedEnd))
+            {
+                return;
+            }
+
+            halfEdgeTracker.SetEnd(halfEdge, clippedStart);
+            halfEdgeTracker.SetEnd(twinHalfEdge, clippedEnd);
         }
 
         private static void ClipUnfinishedRay(VHalfEdge halfEdge, VHalfEdge twinHalfEdge, Bounds bounds)
@@ -239,6 +277,36 @@ namespace Vorannoyed
             clippedStart = intersections[0];
             clippedEnd = intersections[1];
             return Vector2.DistanceSquared(clippedStart, clippedEnd) > Epsilon * Epsilon;
+        }
+
+        private static bool TryClipSegmentToBox(Vector2 start, Vector2 end, Bounds bounds, out Vector2 clippedStart, out Vector2 clippedEnd)
+        {
+            clippedStart = Vector2.Zero;
+            clippedEnd = Vector2.Zero;
+
+            Vector2 direction = end - start;
+            if (direction.LengthSquared() <= Epsilon * Epsilon)
+            {
+                return false;
+            }
+
+            float tEnter = 0f;
+            float tExit = 1f;
+
+            if (!ClipAxis(start.X, direction.X, bounds.Min.X, bounds.Max.X, ref tEnter, ref tExit) ||
+                !ClipAxis(start.Y, direction.Y, bounds.Min.Y, bounds.Max.Y, ref tEnter, ref tExit) ||
+                tExit < tEnter ||
+                IsNonFinite(tEnter) ||
+                IsNonFinite(tExit))
+            {
+                return false;
+            }
+
+            clippedStart = start + direction * tEnter;
+            clippedEnd = start + direction * tExit;
+            return IsFinite(clippedStart) &&
+                IsFinite(clippedEnd) &&
+                Vector2.DistanceSquared(clippedStart, clippedEnd) > Epsilon * Epsilon;
         }
 
         private static void AddLineIntersection(

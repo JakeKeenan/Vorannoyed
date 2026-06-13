@@ -15,9 +15,13 @@ namespace Vorannoyed
         public float SeedRadius { get; set; } = 5f;
         public float VertexRadius { get; set; } = 4f;
         public float EdgeStrokeWidth { get; set; } = 2f;
+        public float HalfEdgeDirectionOffset { get; set; } = 5f;
+        public float HalfEdgeArrowLength { get; set; } = 9f;
+        public float HalfEdgeArrowWidth { get; set; } = 6f;
         public bool DrawSampledRegions { get; set; } = true;
         public bool DrawFiniteEdges { get; set; } = true;
         public bool DrawClippedRays { get; set; } = true;
+        public bool DrawHalfEdgeDirections { get; set; } = false;
         public bool DrawSeeds { get; set; } = true;
         public bool DrawVertices { get; set; } = true;
         public bool DrawLabels { get; set; } = false;
@@ -71,9 +75,12 @@ namespace Vorannoyed
             svg.AppendLine("    .voronoi-cell { opacity: 0.35; }");
             svg.AppendLine("    .voronoi-edge { fill: none; stroke: #111827; stroke-width: 2; stroke-linecap: round; }");
             svg.AppendLine("    .voronoi-ray { fill: none; stroke: #7c3aed; stroke-width: 2; stroke-dasharray: 6 4; stroke-linecap: round; }");
+            svg.AppendLine("    .voronoi-half-edge { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }");
+            svg.AppendLine("    .voronoi-half-edge-arrow { stroke: none; }");
             svg.AppendLine("    .voronoi-seed { fill: #111827; stroke: #ffffff; stroke-width: 1.5; }");
             svg.AppendLine("    .voronoi-vertex { fill: #d61f69; stroke: #ffffff; stroke-width: 1; }");
             svg.AppendLine("    .voronoi-label { fill: #2b2b2b; font-family: Consolas, 'Courier New', monospace; font-size: 12px; }");
+            svg.AppendLine("    .voronoi-half-edge-label { fill: #111827; font-family: Consolas, 'Courier New', monospace; font-size: 11px; paint-order: stroke; stroke: #fffdf8; stroke-width: 3px; }");
             svg.AppendLine("  </style>");
             svg.AppendLine(
                 string.Format(
@@ -92,6 +99,11 @@ namespace Vorannoyed
             if (options.DrawFiniteEdges || options.DrawClippedRays)
             {
                 AppendEdges(svg, halfEdges, vertices, clipBounds, viewBounds, options, height);
+            }
+
+            if (options.DrawHalfEdgeDirections)
+            {
+                AppendHalfEdgeDirections(svg, halfEdges, clipBounds, viewBounds, options, height);
             }
 
             if (options.DrawSeeds)
@@ -232,6 +244,145 @@ namespace Vorannoyed
                         AppendLine(svg, "voronoi-ray", clippedStart, clippedEnd, viewBounds, options, canvasHeight);
                     }
                 }
+            }
+        }
+
+        private static void AppendHalfEdgeDirections(
+            StringBuilder svg,
+            List<VHalfEdge> halfEdges,
+            Bounds clipBounds,
+            Bounds viewBounds,
+            VoronoiSvgExportOptions options,
+            float canvasHeight)
+        {
+            for (int i = 0; i < halfEdges.Count; i++)
+            {
+                VHalfEdge halfEdge = halfEdges[i];
+                if (!TryGetHalfEdgeSegment(halfEdge, clipBounds, out Vector2 start, out Vector2 end))
+                {
+                    continue;
+                }
+
+                string color = GetHalfEdgeColor(i);
+                AppendHalfEdgeDirection(svg, i, start, end, color, viewBounds, options, canvasHeight);
+            }
+        }
+
+        private static bool TryGetHalfEdgeSegment(
+            VHalfEdge halfEdge,
+            Bounds clipBounds,
+            out Vector2 start,
+            out Vector2 end)
+        {
+            start = Vector2.Zero;
+            end = Vector2.Zero;
+
+            if (halfEdge == null || halfEdge.Twin == null)
+            {
+                return false;
+            }
+
+            if (halfEdge.HasEnd && halfEdge.Twin.HasEnd)
+            {
+                start = halfEdge.Twin.End;
+                end = halfEdge.End;
+                return Vector2.DistanceSquared(start, end) > Epsilon * Epsilon;
+            }
+
+            if (halfEdge.HasEnd == halfEdge.Twin.HasEnd)
+            {
+                return false;
+            }
+
+            VHalfEdge rayHalfEdge = halfEdge.HasEnd ? halfEdge.Twin : halfEdge;
+            Vector2 rayStart = halfEdge.HasEnd ? halfEdge.End : halfEdge.Twin.End;
+            Vector2 rayDirection = GetHalfEdgeDirection(rayHalfEdge);
+
+            if (!TryClipRayToBox(rayStart, rayDirection, clipBounds, out Vector2 clippedStart, out Vector2 clippedEnd))
+            {
+                return false;
+            }
+
+            if (halfEdge.HasEnd)
+            {
+                start = clippedEnd;
+                end = clippedStart;
+            }
+            else
+            {
+                start = clippedStart;
+                end = clippedEnd;
+            }
+
+            return Vector2.DistanceSquared(start, end) > Epsilon * Epsilon;
+        }
+
+        private static void AppendHalfEdgeDirection(
+            StringBuilder svg,
+            int halfEdgeIndex,
+            Vector2 start,
+            Vector2 end,
+            string color,
+            Bounds viewBounds,
+            VoronoiSvgExportOptions options,
+            float canvasHeight)
+        {
+            Vector2 svgStart = ToSvgPoint(start, viewBounds, options, canvasHeight);
+            Vector2 svgEnd = ToSvgPoint(end, viewBounds, options, canvasHeight);
+            Vector2 direction = svgEnd - svgStart;
+            float length = direction.Length();
+
+            if (length <= Epsilon)
+            {
+                return;
+            }
+
+            direction /= length;
+            Vector2 normal = new Vector2(-direction.Y, direction.X);
+            Vector2 offset = normal * Math.Max(0f, options.HalfEdgeDirectionOffset);
+            svgStart += offset;
+            svgEnd += offset;
+
+            float arrowLength = Math.Min(Math.Max(0f, options.HalfEdgeArrowLength), length * 0.45f);
+            float arrowWidth = Math.Max(0f, options.HalfEdgeArrowWidth);
+            Vector2 arrowBase = svgEnd - direction * arrowLength;
+            Vector2 arrowLeft = arrowBase + normal * (arrowWidth * 0.5f);
+            Vector2 arrowRight = arrowBase - normal * (arrowWidth * 0.5f);
+
+            svg.AppendLine(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "  <line class=\"voronoi-half-edge\" data-half-edge=\"{0}\" x1=\"{1}\" y1=\"{2}\" x2=\"{3}\" y2=\"{4}\" stroke=\"{5}\" />",
+                    halfEdgeIndex,
+                    Format(svgStart.X),
+                    Format(svgStart.Y),
+                    Format(svgEnd.X),
+                    Format(svgEnd.Y),
+                    color));
+
+            svg.AppendLine(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "  <polygon class=\"voronoi-half-edge-arrow\" data-half-edge=\"{0}\" points=\"{1},{2} {3},{4} {5},{6}\" fill=\"{7}\" />",
+                    halfEdgeIndex,
+                    Format(svgEnd.X),
+                    Format(svgEnd.Y),
+                    Format(arrowLeft.X),
+                    Format(arrowLeft.Y),
+                    Format(arrowRight.X),
+                    Format(arrowRight.Y),
+                    color));
+
+            if (options.DrawLabels)
+            {
+                Vector2 labelPoint = (svgStart + svgEnd) * 0.5f + normal * 6f;
+                svg.AppendLine(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "  <text class=\"voronoi-half-edge-label\" x=\"{0}\" y=\"{1}\">HE{2}</text>",
+                        Format(labelPoint.X),
+                        Format(labelPoint.Y),
+                        halfEdgeIndex));
             }
         }
 
@@ -452,6 +603,13 @@ namespace Vorannoyed
             return canvasHeight - options.Padding - (y - viewBounds.Min.Y) * options.Scale;
         }
 
+        private static Vector2 ToSvgPoint(Vector2 point, Bounds viewBounds, VoronoiSvgExportOptions options, float canvasHeight)
+        {
+            return new Vector2(
+                ToSvgX(point.X, viewBounds, options),
+                ToSvgY(point.Y, viewBounds, options, canvasHeight));
+        }
+
         private static bool IsNonFinite(float value)
         {
             return float.IsNaN(value) || float.IsInfinity(value);
@@ -466,6 +624,12 @@ namespace Vorannoyed
         {
             double hue = (index * 137.50776405003785) % 360.0;
             return HslToHex(hue / 360.0, 0.55, 0.78);
+        }
+
+        private static string GetHalfEdgeColor(int index)
+        {
+            double hue = (index * 137.50776405003785 + 24.0) % 360.0;
+            return HslToHex(hue / 360.0, 0.72, 0.42);
         }
 
         private static string HslToHex(double hue, double saturation, double lightness)

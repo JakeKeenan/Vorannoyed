@@ -5,7 +5,7 @@ namespace Vorannoyed
     internal enum EventType
     {
         VertexEvent,
-        CircleEvent
+        CircleEvent,
     }
     internal class VEvent
     {

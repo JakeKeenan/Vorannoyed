@@ -72,5 +72,34 @@ namespace Vorannoyed.Tests
                 }
             }
         }
+
+        [Test]
+        public void VoronoiSvgExporter_ExportDebugSvg_CanDrawHalfEdgeDirections()
+        {
+            List<Vector2> seeds = new List<Vector2>
+            {
+                new Vector2(1f, 1f),
+                new Vector2(3f, 1f),
+            };
+
+            Vector2 boundary = new Vector2(4f, 4f);
+            VoronoiDiagram diagram = VorannoyedFactory.MakeVoronoiSF(seeds, boundary);
+
+            string svg = VoronoiSvgExporter.ExportDebugSvg(
+                diagram,
+                seeds,
+                boundary,
+                new VoronoiSvgExportOptions
+                {
+                    DrawHalfEdgeDirections = true,
+                    DrawLabels = true,
+                    DrawSampledRegions = false,
+                });
+
+            Assert.That(svg, Does.Contain("class=\"voronoi-half-edge\""));
+            Assert.That(svg, Does.Contain("class=\"voronoi-half-edge-arrow\""));
+            Assert.That(svg, Does.Contain("data-half-edge=\"0\""));
+            Assert.That(svg, Does.Contain(">HE0</text>"));
+        }
     }
 }

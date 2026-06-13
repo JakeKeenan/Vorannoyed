@@ -228,7 +228,7 @@ namespace Vorannoyed
             float startingPointTwoY = solveForY(LeftArc, startingPointTwoX, eventLocation);
             if (float.IsNaN(startingPointTwoY) || float.IsInfinity(startingPointTwoY))
             {
-                startingPointTwoY = solveForY(RightArc, startingPointOneX, eventLocation);
+                startingPointTwoY = solveForY(RightArc, startingPointTwoX, eventLocation);
             }
             Vector2 startPointTwo = new Vector2(startingPointTwoX, startingPointTwoY);
 
@@ -259,7 +259,7 @@ namespace Vorannoyed
             }
         }
 
-        internal void HandleCircleEvent(VEvent circleEvent, List<VHalfEdge> halfEdges, HalfEdgeTracker halfEdgeTracker, ref Dictionary<VEvent, VEventInfo> events, ref List<Vector2> vertices, ref PriorityQueue priorityQueue)
+        internal void HandleCircleEvent(VEvent circleEvent, List<VHalfEdge> halfEdges, HalfEdgeTracker halfEdgeTracker, VertexTracker vertexTracker, ref Dictionary<VEvent, VEventInfo> events, ref PriorityQueue priorityQueue)
         {
             //Add vertex to corresponding edge record
             VEventInfo evnt = events[circleEvent];
@@ -267,7 +267,8 @@ namespace Vorannoyed
             VEdge vEdgeTwo = edges[beachTree[evnt.VEdgeTwoIndex].EdgeIndex];//(VEdge)beachTree[evnt.VEdgeTwoIndex];
 
             Vector2 vertex = new Vector2(circleEvent.EventLocation.X, circleEvent.EventLocation.Y + evnt.Radius);
-            vertices.Add(vertex);
+            Console.WriteLine($"Adding vertex at {vertex}");
+            vertexTracker.Add(vertex);
 
             //The two halfEdges that are colliding
             VHalfEdge halfEdgeOne = vEdgeOne.HalfEdge;
@@ -377,6 +378,7 @@ namespace Vorannoyed
             int newEdgeIndex = evnt.VEdgeOneIndex;
             //int parentEdgeOfNewEdgeIndex = getParentIndex(newEdgeIndex);
             int parentEdgeOfNewEdgeIndex = getClosestLeftAncestor(newEdgeIndex);
+            int closestRightAncestorIndex = getClosestRightAncestor(newEdgeIndex);
             int closestLeftEdgeIndex = getClosestLeftEdgeIndex(newEdgeIndex);
             int closestRightEdgeIndex = getClosestRightEdgeIndex(newEdgeIndex);
 
@@ -416,8 +418,7 @@ namespace Vorannoyed
                     //beachTree[newEdge.RightArcIndex] = arc;
                 }
             }
-            
-            if (closestLeftEdgeIndex != newEdgeIndex)//here
+            else if (closestLeftEdgeIndex != newEdgeIndex)//here
             {
                 newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
                 Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[closestLeftEdgeIndex].EdgeIndex], circleEvent.EventLocation);
@@ -482,32 +483,75 @@ namespace Vorannoyed
                     arc.CircleEventLocations.Add(newCircleEvent);
                 }
             }
-            
+            else if (closestRightAncestorIndex != newEdgeIndex)
+            {
+                newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+                Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[closestRightAncestorIndex].EdgeIndex], circleEvent.EventLocation);
+                if (intercept.Y != float.NegativeInfinity && intercept != vertex)
+                {
+                    VEdge closestRightAncestorOfNewEdge = edges[beachTree[closestRightAncestorIndex].EdgeIndex];
+                    float radius = Vector2.Distance(arcs[closestRightAncestorOfNewEdge.LeftArcIndex].Focus, intercept);
+                    intercept.Y -= radius;
+                    VEvent newCircleEvent = new VEvent(intercept, EventType.CircleEvent);
+                    priorityQueue.Enqueue(newCircleEvent);
+
+                    events.Add(newCircleEvent, new VEventInfo()
+                    {
+                        Radius = radius,
+                        VEdgeOneIndex = newEdgeIndex,
+                        VEdgeTwoIndex = closestRightAncestorIndex,
+                    });
+
+                    //add to leafs
+                    VArc arc = arcs[closestRightAncestorOfNewEdge.LeftArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+
+                    arc = arcs[closestRightAncestorOfNewEdge.RightArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+
+                    newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
+
+                    arc = arcs[newEdge.RightArcIndex];
+                    arc.CircleEventLocations.Add(newCircleEvent);
+                }
+            }
+        }
+        private int getClosestRightAncestor(int edgeIndex)
+        {
+            int currentDescendant = edgeIndex;
+
+            while (hasParent(currentDescendant))
+            {
+                int parentIndex = getParentIndex(currentDescendant);
+
+                if (getLeftChildIndex(parentIndex) == currentDescendant)
+                {
+                    return parentIndex;
+                }
+
+                currentDescendant = parentIndex;
+            }
+
+            return edgeIndex;
         }
 
         private int getClosestLeftAncestor(int edgeIndex)
         {
-            int retVal = edgeIndex;
             int currentDescendant = edgeIndex;
-            int parentIndex = getParentIndex(edgeIndex);
-            if(getRightChildIndex(parentIndex) == currentDescendant)
+
+            while (hasParent(currentDescendant))
             {
-                retVal = currentDescendant;
-            }
-            else
-            {
-                while (parentIndex != 0)
+                int parentIndex = getParentIndex(currentDescendant);
+
+                if (getRightChildIndex(parentIndex) == currentDescendant)
                 {
-                    currentDescendant = parentIndex;
-                    parentIndex = getParentIndex(parentIndex);
-                    if (getRightChildIndex(parentIndex) == currentDescendant)
-                    {
-                        retVal = parentIndex;
-                        parentIndex = 0;
-                    }
+                    return parentIndex;
                 }
+
+                currentDescendant = parentIndex;
             }
-            return retVal;
+
+            return edgeIndex;
         }
 
         private int getClosestLeftEdgeIndex(int edgeIndex)
