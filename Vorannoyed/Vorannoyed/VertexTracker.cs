@@ -26,6 +26,14 @@ namespace Vorannoyed
 
         public void Add(Vector2 vertex)
         {
+            foreach (Vector2 existingVertex in vertices)
+            {
+                if (Vector2.DistanceSquared(existingVertex, vertex) <= Epsilon * Epsilon)
+                {
+                    return;
+                }
+            }
+
             int index = vertices.Count;
             vertices.Add(vertex);
 

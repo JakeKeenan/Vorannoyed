@@ -67,6 +67,7 @@ namespace Vorannoyed
             PrintResultingHalfEdges(halfEdges);
 
             ClipTrackedHalfEdges(boundry);
+            RemoveZeroLengthHalfEdges(halfEdges);
 
 
             PrintResultingHalfEdges(halfEdges);
@@ -116,6 +117,75 @@ namespace Vorannoyed
             }
 
             return halfEdges.IndexOf(halfEdge);
+        }
+
+        private static void RemoveZeroLengthHalfEdges(List<VHalfEdge> halfEdges)
+        {
+            HashSet<VHalfEdge> removedHalfEdges = new HashSet<VHalfEdge>();
+
+            for (int i = 0; i < halfEdges.Count; i++)
+            {
+                VHalfEdge halfEdge = halfEdges[i];
+                if (halfEdge == null || halfEdge.Twin == null || removedHalfEdges.Contains(halfEdge))
+                {
+                    continue;
+                }
+
+                VHalfEdge twinHalfEdge = halfEdge.Twin;
+                if (!halfEdge.HasEnd ||
+                    !twinHalfEdge.HasEnd ||
+                    Vector2.DistanceSquared(halfEdge.End, twinHalfEdge.End) > Epsilon * Epsilon)
+                {
+                    continue;
+                }
+
+                removedHalfEdges.Add(halfEdge);
+                removedHalfEdges.Add(twinHalfEdge);
+                RemoveZeroLengthHalfEdgePair(halfEdge, twinHalfEdge);
+            }
+
+            halfEdges.RemoveAll(halfEdge => removedHalfEdges.Contains(halfEdge));
+        }
+
+        private static void RemoveZeroLengthHalfEdgePair(VHalfEdge halfEdge, VHalfEdge twinHalfEdge)
+        {
+            StitchAroundRemovedHalfEdge(halfEdge, halfEdge, twinHalfEdge);
+            StitchAroundRemovedHalfEdge(twinHalfEdge, halfEdge, twinHalfEdge);
+            RemoveHalfEdgeFromTile(halfEdge);
+            RemoveHalfEdgeFromTile(twinHalfEdge);
+
+            halfEdge.Next = null;
+            halfEdge.Prev = null;
+            halfEdge.Twin = null;
+            twinHalfEdge.Next = null;
+            twinHalfEdge.Prev = null;
+            twinHalfEdge.Twin = null;
+        }
+
+        private static void StitchAroundRemovedHalfEdge(VHalfEdge halfEdge, VHalfEdge removedHalfEdge, VHalfEdge removedTwinHalfEdge)
+        {
+            VHalfEdge prev = halfEdge.Prev;
+            VHalfEdge next = halfEdge.Next;
+            bool prevRemains = prev != null && prev != removedHalfEdge && prev != removedTwinHalfEdge;
+            bool nextRemains = next != null && next != removedHalfEdge && next != removedTwinHalfEdge;
+
+            if (prevRemains)
+            {
+                prev.Next = nextRemains ? next : null;
+            }
+
+            if (nextRemains)
+            {
+                next.Prev = prevRemains ? prev : null;
+            }
+        }
+
+        private static void RemoveHalfEdgeFromTile(VHalfEdge halfEdge)
+        {
+            if (halfEdge.Tile != null)
+            {
+                halfEdge.Tile.Edges.Remove(halfEdge);
+            }
         }
 
         private static void handleEvent(VEvent vEvent, EventType et, List<VHalfEdge> halfEdges)

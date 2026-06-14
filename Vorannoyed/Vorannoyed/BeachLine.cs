@@ -7,6 +7,8 @@ namespace Vorannoyed
 {
     internal class BeachLine
     {
+        private const float Epsilon = 0.0001f;
+
         private int capacity = 10;
         private BeachLineItem[] beachTree;
         private List<VEdge> edges;
@@ -344,78 +346,6 @@ namespace Vorannoyed
                 newHalfEdge.Tile.Edges.AddLast(newHalfEdge);
                 newHalfEdgeTwin.Tile.Edges.AddLast(newHalfEdgeTwin);
             }
-
-            /*
-            if (arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.LeftArcIndex].Focus || arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.RightArcIndex].Focus)
-            {
-                if (arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.LeftArcIndex].Focus)
-                {
-                    newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex,  newHalfEdge);
-                    //newEdge = new VEdge(vEdgeTwo.RightArcIndex, vEdgeOne.RightArcIndex);
-                    beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
-                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
-                    edges.Add(newEdge);
-                    //want to delete left arc of edge2
-                    beachTree[getLeftChildIndex(evnt.VEdgeTwoIndex)] = null;
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                }
-                else
-                {
-                    newEdge = new VEdge(vEdgeTwo.LeftArcIndex, vEdgeOne.RightArcIndex, newHalfEdge);
-                    beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
-                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
-                    edges.Add(newEdge);
-                    //want to delete the right arc of edge2
-                    beachTree[getRightChildIndex(evnt.VEdgeTwoIndex)] = null;
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                }
-            }
-            else
-            {
-                //vEdgeOne.RightArcIndex;
-                if (arcs[vEdgeOne.RightArcIndex].Focus == arcs[vEdgeTwo.RightArcIndex].Focus)
-                {
-                    newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.LeftArcIndex, newHalfEdge);
-                    beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
-                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
-                    edges.Add(newEdge);
-                    //want to delete right arc of arc2
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                }
-                else
-                {
-                    // newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
-                    // beachTree[evnt.VEdgeTwoIndex].EdgeIndex = edges.Count;
-                    // beachTree[evnt.VEdgeTwoIndex].IsEdge = true;
-                    // edges.Add(newEdge);
-                    // //want to delete left arc of arc2
-                    // copyTree(evnt.VEdgeOneIndex, getSibling(getLeftChildIndex(evnt.VEdgeOneIndex)), ref events);
-                    // //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                    if (evnt.VEdgeOneIndex < evnt.VEdgeTwoIndex)
-                    {
-                        newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
-                        beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
-                        beachTree[evnt.VEdgeOneIndex].IsEdge = true;
-                        edges.Add(newEdge);
-                        //want to delete left arc of arc2
-                        copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                        //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                    } 
-                    else
-                    {
-                        newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
-                        beachTree[evnt.VEdgeTwoIndex].EdgeIndex = edges.Count;
-                        beachTree[evnt.VEdgeTwoIndex].IsEdge = true;
-                        edges.Add(newEdge);
-                        //want to delete left arc of arc2
-                        int rightChildIndex = getRightChildIndex(evnt.VEdgeOneIndex);
-                        int siblingIndex = getSibling(rightChildIndex);
-                        copyTree(evnt.VEdgeOneIndex, getSibling(getRightChildIndex(evnt.VEdgeOneIndex)), ref events);
-                        //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                    }
-                    
-                }
-            }*/
             
             // new stuff
             int arcIndexToDelete = -1;
@@ -983,7 +913,8 @@ namespace Vorannoyed
                 float radius = events[circleEventSite].Radius;
                 if (events[circleEventSite].Deleted != true)
                 {
-                    if (radius >= Vector2.Distance(cricleEventSiteCenter, VertexEventSite))
+                    float distanceToCircleCenter = Vector2.Distance(cricleEventSiteCenter, VertexEventSite);
+                    if (distanceToCircleCenter < radius - Epsilon)
                     {
                         events[circleEventSite].Deleted = true;
                         return;

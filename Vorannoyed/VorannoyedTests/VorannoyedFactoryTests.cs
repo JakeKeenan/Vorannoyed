@@ -74,11 +74,17 @@ namespace Vorannoyed.Tests
             VoronoiDiagram actual = VorannoyedFactory.MakeVoronoiSF(Seeds, Boundry);
             //Assert
             Vector2[] actualVerticies = actual.Verticies;
+            Assert.That(actualVerticies, Has.Length.EqualTo(expectedVerticies.Length));
             for (int i = 0; i < actualVerticies.Length; i++)
             {
                 Assert.That(actualVerticies[i].X, Is.EqualTo(expectedVerticies[i].X).Within(0.05));
                 Assert.That(actualVerticies[i].Y, Is.EqualTo(expectedVerticies[i].Y).Within(0.05));
             }
+
+            AssertContainsHalfEdgeBetween(actual.HalfEdges, new Vector2(1.5f, 1.5f), new Vector2(0f, 1.5f));
+            AssertContainsHalfEdgeBetween(actual.HalfEdges, new Vector2(1.5f, 1.5f), new Vector2(1.5f, 0f));
+            AssertDoesNotContainHalfEdgeBetween(actual.HalfEdges, new Vector2(1.5f, 1.5f), Vector2.Zero);
+            AssertNoZeroLengthHalfEdges(actual.HalfEdges);
         }
 
         [Test]
@@ -281,6 +287,41 @@ namespace Vorannoyed.Tests
                 {
                     Assert.Fail($"Did not expect a half-edge between {firstVertex} and {secondVertex}.");
                 }
+            }
+        }
+
+        private static void AssertContainsHalfEdgeBetween(List<VHalfEdge> halfEdges, Vector2 firstVertex, Vector2 secondVertex)
+        {
+            foreach (VHalfEdge halfEdge in halfEdges)
+            {
+                if (halfEdge.Twin == null || !halfEdge.HasEnd || !halfEdge.Twin.HasEnd)
+                {
+                    continue;
+                }
+
+                bool connectsVertices =
+                    IsNear(halfEdge.End, firstVertex) && IsNear(halfEdge.Twin.End, secondVertex) ||
+                    IsNear(halfEdge.End, secondVertex) && IsNear(halfEdge.Twin.End, firstVertex);
+
+                if (connectsVertices)
+                {
+                    return;
+                }
+            }
+
+            Assert.Fail($"Expected a half-edge between {firstVertex} and {secondVertex}.");
+        }
+
+        private static void AssertNoZeroLengthHalfEdges(List<VHalfEdge> halfEdges)
+        {
+            foreach (VHalfEdge halfEdge in halfEdges)
+            {
+                if (halfEdge.Twin == null || !halfEdge.HasEnd || !halfEdge.Twin.HasEnd)
+                {
+                    continue;
+                }
+
+                Assert.That(Vector2.DistanceSquared(halfEdge.End, halfEdge.Twin.End), Is.GreaterThan(0.0001f * 0.0001f));
             }
         }
 
