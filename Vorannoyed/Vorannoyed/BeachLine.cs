@@ -19,6 +19,23 @@ namespace Vorannoyed
             edges = new List<VEdge>();
         }
 
+        internal void PrintBeachTree()
+        {
+            Console.WriteLine("Beach tree:");
+
+            if (!HasBeachTreeNode(0))
+            {
+                Console.WriteLine("  <empty>");
+                return;
+            }
+
+            BeachTreeDisplay display = BuildBeachTreeDisplay(0);
+            foreach (string line in display.Lines)
+            {
+                Console.WriteLine(line.TrimEnd());
+            }
+        }
+
         internal void HandleVertexEvent(Vector2 eventLocation, List<VHalfEdge> halfEdges, HalfEdgeTracker halfEdgeTracker, ref Dictionary<VEvent, VEventInfo> events, ref VTile[] tiles, int curTileIndex, ref PriorityQueue priorityQueue)
         {
             //locate the existing arc (if any) that is above the new site
@@ -103,7 +120,12 @@ namespace Vorannoyed
                 edges.Add(new VEdge(beachTree[leftChildIndex].ArcIndex, beachTree[getLeftChildIndex(rChild)].ArcIndex, halfEdge));
                 //edges[edges.Count - 1].HalfEdge = halfEdges.Count + 1;
 
-                
+                int edgeAncestorIndex = getFirstRightParentIndex(arcIndex);
+                if (edgeAncestorIndex >= 0)
+                {
+                    int rightEdgeIndex = beachTree[edgeAncestorIndex].EdgeIndex;
+                    edges[rightEdgeIndex].LeftArcIndex = arcs.Count - 1;
+                }
 
                 //Check for potential circle events, add them to event queue if they exist
                 if (!hasParent(arcIndex))
@@ -323,6 +345,7 @@ namespace Vorannoyed
                 newHalfEdgeTwin.Tile.Edges.AddLast(newHalfEdgeTwin);
             }
 
+            /*
             if (arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.LeftArcIndex].Focus || arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.RightArcIndex].Focus)
             {
                 if (arcs[vEdgeOne.LeftArcIndex].Focus == arcs[vEdgeTwo.LeftArcIndex].Focus)
@@ -361,21 +384,97 @@ namespace Vorannoyed
                 }
                 else
                 {
-                    newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
+                    // newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
+                    // beachTree[evnt.VEdgeTwoIndex].EdgeIndex = edges.Count;
+                    // beachTree[evnt.VEdgeTwoIndex].IsEdge = true;
+                    // edges.Add(newEdge);
+                    // //want to delete left arc of arc2
+                    // copyTree(evnt.VEdgeOneIndex, getSibling(getLeftChildIndex(evnt.VEdgeOneIndex)), ref events);
+                    // //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
+                    if (evnt.VEdgeOneIndex < evnt.VEdgeTwoIndex)
+                    {
+                        newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
+                        beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
+                        beachTree[evnt.VEdgeOneIndex].IsEdge = true;
+                        edges.Add(newEdge);
+                        //want to delete left arc of arc2
+                        copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)), ref events);
+                        //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
+                    } 
+                    else
+                    {
+                        newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
+                        beachTree[evnt.VEdgeTwoIndex].EdgeIndex = edges.Count;
+                        beachTree[evnt.VEdgeTwoIndex].IsEdge = true;
+                        edges.Add(newEdge);
+                        //want to delete left arc of arc2
+                        int rightChildIndex = getRightChildIndex(evnt.VEdgeOneIndex);
+                        int siblingIndex = getSibling(rightChildIndex);
+                        copyTree(evnt.VEdgeOneIndex, getSibling(getRightChildIndex(evnt.VEdgeOneIndex)), ref events);
+                        //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
+                    }
+                    
+                }
+            }*/
+            
+            // new stuff
+            int arcIndexToDelete = -1;
+            if (vEdgeOne.RightArcIndex == vEdgeTwo.LeftArcIndex)
+            {
+                arcIndexToDelete = vEdgeOne.RightArcIndex;
+                newEdge = new VEdge(vEdgeOne.LeftArcIndex, vEdgeTwo.RightArcIndex, newHalfEdge);
+                if (evnt.VEdgeOneIndex < evnt.VEdgeTwoIndex)
+                {
                     beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
                     beachTree[evnt.VEdgeOneIndex].IsEdge = true;
                     edges.Add(newEdge);
-                    //want to delete left arc of arc2
-                    copyTree(evnt.VEdgeTwoIndex, getSibling(getLeftChildIndex(evnt.VEdgeTwoIndex)), ref events);
-                    //copyTree(evnt.VEdgeTwoIndex, getSibling(getRightChildIndex(evnt.VEdgeTwoIndex)), ref events);
+                    int leftChildIndex = getLeftChildIndex(evnt.VEdgeTwoIndex);
+                    beachTree[leftChildIndex] = null;
+                    int siblingIndex = getSibling(leftChildIndex);
+                    copyTree(evnt.VEdgeTwoIndex, siblingIndex, ref events);
+                }
+                else
+                {
+                    beachTree[evnt.VEdgeTwoIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeTwoIndex].IsEdge = true;
+                    edges.Add(newEdge);
+                    int rightChildIndex = getRightChildIndex(evnt.VEdgeOneIndex);
+                    beachTree[rightChildIndex] = null;
+                    int siblingIndex = getSibling(rightChildIndex);
+                    copyTree(evnt.VEdgeOneIndex, siblingIndex, ref events);
                 }
             }
-
+            if (vEdgeOne.LeftArcIndex == vEdgeTwo.RightArcIndex)
+            {
+                arcIndexToDelete = vEdgeOne.LeftArcIndex;
+                newEdge = new VEdge(vEdgeTwo.LeftArcIndex, vEdgeOne.RightArcIndex, newHalfEdge);
+                if (evnt.VEdgeOneIndex < evnt.VEdgeTwoIndex)
+                {
+                    beachTree[evnt.VEdgeOneIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeOneIndex].IsEdge = true;
+                    edges.Add(newEdge);
+                    int rightChildIndex = getRightChildIndex(evnt.VEdgeTwoIndex);
+                    beachTree[rightChildIndex] = null;
+                    int siblingIndex = getSibling(rightChildIndex);
+                    copyTree(evnt.VEdgeTwoIndex, siblingIndex, ref events);
+                }
+                else
+                {
+                    beachTree[evnt.VEdgeTwoIndex].EdgeIndex = edges.Count;
+                    beachTree[evnt.VEdgeTwoIndex].IsEdge = true;
+                    edges.Add(newEdge);
+                    int leftChildIndex = getLeftChildIndex(evnt.VEdgeOneIndex);
+                    beachTree[leftChildIndex] = null;
+                    int siblingIndex = getSibling(leftChildIndex);
+                    copyTree(evnt.VEdgeOneIndex, siblingIndex, ref events);
+                }
+            }
+            
 
             //need to look left and right,
             events[circleEvent].Deleted = true;//look here... 10-26
             //evnt.VEdgeOneIndex
-            int newEdgeIndex = evnt.VEdgeOneIndex;
+            int newEdgeIndex = Math.Min(evnt.VEdgeOneIndex, evnt.VEdgeTwoIndex);
             //int parentEdgeOfNewEdgeIndex = getParentIndex(newEdgeIndex);
             int parentEdgeOfNewEdgeIndex = getClosestLeftAncestor(newEdgeIndex);
             int closestRightAncestorIndex = getClosestRightAncestor(newEdgeIndex);
@@ -418,7 +517,7 @@ namespace Vorannoyed
                     //beachTree[newEdge.RightArcIndex] = arc;
                 }
             }
-            else if (closestLeftEdgeIndex != newEdgeIndex)//here
+            if (closestLeftEdgeIndex != newEdgeIndex)//here
             {
                 newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
                 Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[closestLeftEdgeIndex].EdgeIndex], circleEvent.EventLocation);
@@ -483,7 +582,7 @@ namespace Vorannoyed
                     arc.CircleEventLocations.Add(newCircleEvent);
                 }
             }
-            else if (closestRightAncestorIndex != newEdgeIndex)
+            if (closestRightAncestorIndex != newEdgeIndex)
             {
                 newEdge = edges[beachTree[newEdgeIndex].EdgeIndex];
                 Vector2 intercept = getRayIntercept(newEdge, edges[beachTree[closestRightAncestorIndex].EdgeIndex], circleEvent.EventLocation);
@@ -905,6 +1004,123 @@ namespace Vorannoyed
             }
         }
 
+        private BeachTreeDisplay BuildBeachTreeDisplay(int index)
+        {
+            if (!HasBeachTreeNode(index))
+            {
+                return null;
+            }
+
+            string label = FormatBeachTreeNode(index);
+            BeachTreeDisplay left = BuildBeachTreeDisplay(getLeftChildIndex(index));
+            BeachTreeDisplay right = BuildBeachTreeDisplay(getRightChildIndex(index));
+
+            if (left == null && right == null)
+            {
+                return new BeachTreeDisplay(new List<string> { label }, label.Length, label.Length / 2);
+            }
+
+            if (left == null)
+            {
+                return BuildRightOnlyBeachTreeDisplay(label, right);
+            }
+
+            if (right == null)
+            {
+                return BuildLeftOnlyBeachTreeDisplay(label, left);
+            }
+
+            return BuildTwoChildBeachTreeDisplay(label, left, right);
+        }
+
+        private BeachTreeDisplay BuildTwoChildBeachTreeDisplay(string label, BeachTreeDisplay left, BeachTreeDisplay right)
+        {
+            int middleGap = label.Length + 2;
+            int width = left.Width + middleGap + right.Width;
+            int rootOffset = left.Width + 1 + label.Length / 2;
+            List<string> lines = new List<string>();
+
+            lines.Add(new string(' ', left.Width + 1) + label + new string(' ', right.Width + 1));
+            lines.Add(
+                new string(' ', left.RootOffset + 1) +
+                "/" +
+                new string(' ', left.Width - left.RootOffset - 1 + label.Length + right.RootOffset) +
+                "\\" +
+                new string(' ', right.Width - right.RootOffset));
+
+            int height = Math.Max(left.Lines.Count, right.Lines.Count);
+            for (int i = 0; i < height; i++)
+            {
+                string leftLine = i < left.Lines.Count ? PadRightTo(left.Lines[i], left.Width) : new string(' ', left.Width);
+                string rightLine = i < right.Lines.Count ? PadRightTo(right.Lines[i], right.Width) : new string(' ', right.Width);
+
+                lines.Add(leftLine + new string(' ', middleGap) + rightLine);
+            }
+
+            return new BeachTreeDisplay(lines, width, rootOffset);
+        }
+
+        private BeachTreeDisplay BuildLeftOnlyBeachTreeDisplay(string label, BeachTreeDisplay left)
+        {
+            int middleGap = label.Length + 1;
+            int width = left.Width + middleGap;
+            int rootOffset = left.Width + 1 + label.Length / 2;
+            List<string> lines = new List<string>();
+
+            lines.Add(new string(' ', left.Width + 1) + label);
+            lines.Add(new string(' ', left.RootOffset + 1) + "/" + new string(' ', width - left.RootOffset - 2));
+
+            foreach (string leftLine in left.Lines)
+            {
+                lines.Add(PadRightTo(leftLine, left.Width) + new string(' ', middleGap));
+            }
+
+            return new BeachTreeDisplay(lines, width, rootOffset);
+        }
+
+        private BeachTreeDisplay BuildRightOnlyBeachTreeDisplay(string label, BeachTreeDisplay right)
+        {
+            int middleGap = label.Length + 1;
+            int width = middleGap + right.Width;
+            int rootOffset = label.Length / 2;
+            int branchOffset = label.Length + right.RootOffset;
+            List<string> lines = new List<string>();
+
+            lines.Add(label + new string(' ', right.Width + 1));
+            lines.Add(new string(' ', branchOffset) + "\\" + new string(' ', width - branchOffset - 1));
+
+            foreach (string rightLine in right.Lines)
+            {
+                lines.Add(new string(' ', middleGap) + PadRightTo(rightLine, right.Width));
+            }
+
+            return new BeachTreeDisplay(lines, width, rootOffset);
+        }
+
+        private string FormatBeachTreeNode(int index)
+        {
+            BeachLineItem item = beachTree[index];
+            string itemType = item.IsEdge ? "E" : "A";
+            int targetIndex = item.IsEdge ? item.EdgeIndex : item.ArcIndex;
+
+            return $"[{index}] {itemType}[{targetIndex}]";
+        }
+
+        private static string PadRightTo(string value, int width)
+        {
+            if (value.Length >= width)
+            {
+                return value;
+            }
+
+            return value + new string(' ', width - value.Length);
+        }
+
+        private bool HasBeachTreeNode(int index)
+        {
+            return index >= 0 && index < beachTree.Length && beachTree[index] != null;
+        }
+
         private bool hasParent(int index)
         {
             return index > 0;
@@ -994,6 +1210,20 @@ namespace Vorannoyed
 
             }
             return retVal;
+        }
+
+        private sealed class BeachTreeDisplay
+        {
+            public List<string> Lines { get; }
+            public int Width { get; }
+            public int RootOffset { get; }
+
+            public BeachTreeDisplay(List<string> lines, int width, int rootOffset)
+            {
+                Lines = lines;
+                Width = width;
+                RootOffset = rootOffset;
+            }
         }
     }
 }

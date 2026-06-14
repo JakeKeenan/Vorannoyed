@@ -120,6 +120,8 @@ namespace Vorannoyed
 
         private static void handleEvent(VEvent vEvent, EventType et, List<VHalfEdge> halfEdges)
         {
+            Console.WriteLine($"Handling {et} at {vEvent.EventLocation}");
+
             if (et == EventType.VertexEvent)
             {
                 beachLine.HandleVertexEvent(vEvent.EventLocation, halfEdges, halfEdgeTracker, ref events, ref tiles, currentTileIndex, ref priorityQueue);
@@ -129,6 +131,8 @@ namespace Vorannoyed
             {
                 beachLine.HandleCircleEvent(vEvent, halfEdges, halfEdgeTracker, vertexTracker, ref events, ref priorityQueue);
             }
+
+            beachLine.PrintBeachTree();
         }
 
         private static void ClipTrackedHalfEdges(Vector2 boundry)
