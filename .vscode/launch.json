@@ -36,6 +36,40 @@
       "justMyCode": true
     },
     {
+      "name": "Debug four-way SVG",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build svg runner",
+      "program": "${workspaceFolder}/Vorannoyed/VorannoyedSvgRunner/bin/Debug/net10.0/VorannoyedSvgRunner.dll",
+      "args": [
+        "four-way",
+        "--half-edges",
+        "--output",
+        "${workspaceFolder}/Vorannoyed/artifacts/vorannoyed-svgs/four-way.svg"
+      ],
+      "cwd": "${workspaceFolder}/Vorannoyed",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Debug two-polygon SVG",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build svg runner",
+      "program": "${workspaceFolder}/Vorannoyed/VorannoyedSvgRunner/bin/Debug/net10.0/VorannoyedSvgRunner.dll",
+      "args": [
+        "two-polygon",
+        "--half-edges",
+        "--output",
+        "${workspaceFolder}/Vorannoyed/artifacts/vorannoyed-svgs/two-polygon.svg"
+      ],
+      "cwd": "${workspaceFolder}/Vorannoyed",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
       "name": "Debug two-polygon2 SVG",
       "type": "coreclr",
       "request": "launch",
